@@ -1,0 +1,20 @@
+<package>
+  <name>semantic_map_msgs</name>
+  <version>0.0.1</version>
+  <description>
+    Message definitions for the ROS semantic map framework.
+  </description>
+  <maintainer email="ralf.kaestner@gmail.com">Ralf Kaestner</maintainer>
+
+  <license>LGPL</license>
+
+  <author>Ralf Kaestner</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>message_generation</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+
+  <run_depend>message_runtime</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+</package>
