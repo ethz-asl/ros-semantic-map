@@ -1,0 +1,10 @@
+<launch>
+  <arg name="config_file"
+       default="$(find semantic_map_to_owl)/config/map_to_owl.yaml"/>
+  <arg name="output" default="screen"/>
+
+  <node name="semantic_map_to_owl" pkg="semantic_map_to_owl"
+        type="map_to_owl_node" output="$(arg output)">
+    <rosparam command="load" file="$(arg config_file)"/>
+  </node>
+</launch>

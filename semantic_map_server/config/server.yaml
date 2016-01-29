@@ -1,0 +1,3 @@
+servers:
+  get_semantic_map:
+    service: "get_semantic_map"

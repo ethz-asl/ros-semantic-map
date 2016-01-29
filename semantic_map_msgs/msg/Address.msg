@@ -1,5 +1,3 @@
-# Semantic map address message type, Ralf Kaestner, ralf.kaestner@gmail.com
-
 string room_nr         # room number
 string floor_nr        # floor number
 string street_nr       # street number

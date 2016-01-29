@@ -1,0 +1,12 @@
+<launch>
+  <arg name="manager"/>
+  <arg name="config_file"
+       default="$(find semantic_map_to_owl)/config/map_to_owl.yaml"/>
+  <arg name="output" default="screen"/>
+
+  <node name="semantic_map_to_owl" pkg="nodelet" type="nodelet"
+        args="load semantic_map_to_owl/MapToOwl $(arg manager)"
+        output="$(arg output)">
+    <rosparam command="load" file="$(arg config_file)"/>
+  </node>
+</launch>

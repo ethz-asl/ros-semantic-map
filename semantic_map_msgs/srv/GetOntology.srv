@@ -1,0 +1,3 @@
+Map map               # Map to retrieve the ontology for
+---
+string ontology       # Ontological description of the map in OWL format

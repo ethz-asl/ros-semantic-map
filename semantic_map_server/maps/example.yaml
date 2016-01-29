@@ -1,0 +1,108 @@
+frame_id: "map"
+stamp: 2015-03-12T15:08:00
+
+namespace: "http://asl.ethz.ch/knowrob/example_semantic_map.owl"
+id: "ExampleSemanticMap"
+
+prefixes:
+  - name: "marker_interaction"
+    prefix: "http://asl.ethz.ch/knowrob/marker_interaction.owl#"
+imports:
+  - "package://knowrob_semantic_map_tools/owl/semantic_map.owl"
+  
+address:
+  room_nr: 224
+  floor_nr: "J"
+  street_nr: 21
+  street_name: "Leonhardstrasse"
+  city_name: "Zurich"
+
+object_properties:
+  hinged_to:
+    id: "knowrob:hingedTo"
+  end_state:
+    id: "knowrob:taskEndState"
+
+data_properties:
+  path_to_handle:
+    id: "marker_interaction:pathToInteractiveMarkerHandle"
+  menu_entry:
+    id: "marker_interaction:menuEntryTitle"
+  purchase_price:
+    id: "knowrob:purchasePrice"
+
+objects:
+  - id: "Cupboard1"
+    type: "Cupboard"
+    size:
+      x: 0.5
+      y: 0.6
+      z: 0.7
+    position:
+      x: 0
+      y: 0
+      z: 0
+    orientation:
+      w: 1
+      x: 0
+      y: 0
+      z: 0
+    purchase_price: 400
+    parts:
+      - id: "Door1"
+        type: "Door"
+        size:
+          x: 0.01
+          y: 0.6
+          z: 0.7
+        position:
+          x: 0.26
+          y: 0
+          z: 0
+        orientation:
+          w: 1
+          x: 0
+          y: 0
+          z: 0
+        hinged_to: "Cupboard1"
+        path_to_handle: "package://knowrob_semantic_map_tools/handles/door.dae"
+        actions:
+          - type: "knowrob:OpeningADoor"
+            asserted: true
+            end_state: "knowrob:ObjectStateOpen"
+            menu_entry: "Open %s"
+          - type: "knowrob:ClosingADoor"
+            asserted: true
+            end_state: "knowrob:ObjectStateClosed"
+            menu_entry: "Close %s"
+        parts:
+          - id: "HingedJoint1"
+            type: "HingedJoint"
+            size:
+              x: 0.01
+              y: 0.007
+              z: 0.006
+            position:
+              x: 0.255
+              y: -0.3
+              z: -0.003
+            orientation:
+              w: 1
+              x: 0
+              y: 0
+              z: 0
+          - id: "Handle1"
+            type: "Handle"
+            size:
+              x: 0.05
+              y: 0.06
+              z: 0.07
+            position:
+              x: 0.26
+              y: 0
+              z: 0
+            orientation:
+              w: 1
+              x: 0
+              y: 0
+              z: 0

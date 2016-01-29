@@ -10,21 +10,23 @@ find_package(
 
 add_message_files(
   FILES
-    SemMap.msg
-    SemMapAction.msg
-    SemMapActionFeedback.msg
-    SemMapAddress.msg
-    SemMapDataProperty.msg
-    SemMapObject.msg
-    SemMapObjectProperty.msg
-    SemMapObjectSize.msg
-    SemMapPrefix.msg
+    ActionFeedback.msg
+    ActionOnObject.msg
+    Address.msg
+    DataProperty.msg
+    Map.msg
+    Mission.msg
+    NamespacePrefix.msg
+    Object.msg
+    ObjectProperty.msg
+    Size.msg
+    Task.msg
 )
 
 add_service_files(
   FILES
-    GenerateSemanticMapOWL.srv
-    GetSemanticMap.srv
+    GetOntology.srv
+    GetMap.srv
 )
 
 generate_messages(

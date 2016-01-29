@@ -1,0 +1,13 @@
+<launch>
+  <arg name="config_file"
+       default="$(find semantic_map_server)/config/server.yaml"/>
+  <arg name="map_file"
+       default="$(find semantic_map_server)/maps/example.yaml"/>
+  <arg name="output" default="screen"/>
+
+  <node name="semantic_map_server" pkg="semantic_map_server"
+        type="semantic_map_server_node" output="$(arg output)">
+    <rosparam command="load" file="$(arg config_file)"/>
+    <rosparam command="load" file="$(arg map_file)" ns="map"/>
+  </node>
+</launch>

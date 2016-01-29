@@ -1,0 +1,28 @@
+<package>
+  <name>semantic_map_to_owl</name>
+  <version>0.0.1</version>
+  <description>
+    ROS node for converting semantic map descriptions to OWL format.
+  </description>
+  <maintainer email="ralf.kaestner@gmail.com">Ralf Kaestner</maintainer>
+
+  <license>LGPL</license>
+
+  <author>Ralf Kaestner</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>nodelet</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>roscpp_nodewrap</build_depend>
+  <build_depend>semantic_map_msgs</build_depend>
+
+  <run_depend>nodelet</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>roscpp_nodewrap</run_depend>
+  <run_depend>semantic_map_msgs</run_depend>
+  
+  <export>
+    <nodelet plugin="${prefix}/nodelet_plugins.xml"/>
+  </export>
+</package>

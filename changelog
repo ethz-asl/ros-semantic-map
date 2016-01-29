@@ -1,3 +1,9 @@
+ros-semantic-map (0.0.1-2) unstable; urgency=low
+
+  * Progress commit
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 29 Jan 2016 17:02:00 +0100
+
 ros-semantic-map (0.0.1-1) unstable; urgency=low
 
   * Initial commit
