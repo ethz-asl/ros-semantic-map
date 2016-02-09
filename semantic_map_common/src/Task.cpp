@@ -27,11 +27,6 @@ namespace semantic_map {
 Task::Task() {
 }
 
-Task::Task(const std::string& identifier, const std::string& type, const
-    Entity& parent, bool asserted) {
-  impl_.reset(new Impl(identifier, type, parent, asserted));
-}
-
 Task::Task(const Task& src) :
   Action(src) {
 }
@@ -46,11 +41,54 @@ Task::~Task() {
 }
 
 Task::Impl::Impl(const std::string& identifier, const std::string& type,
-    const Entity& parent, bool asserted) :
-  Action::Impl(identifier, type, parent, asserted),
-  quantification_(Intersection),
-  unordered_(false) {
+    bool asserted, Quantification quantification, bool unordered) :
+  Action::Impl(identifier, type, asserted),
+  quantification_(quantification),
+  unordered_(unordered) {
 }
+
+// Task::Impl::Impl(const XmlRpc::XmlRpcValue& value, const std::list<Action>&
+//     actions, const Task& parentTask) :
+//   Action::Impl(value, parentTask) {
+//   std::vector<std::string> actionIdentifiers;
+//   std::string quantification;
+//   bool unordered;
+//     
+//   try {
+//     if (value.hasMember("actions")) {
+//       XmlRpc::XmlRpcValue& actionsValue = const_cast<XmlRpc::XmlRpcValue&>(
+//         value)["actions"];
+//       actionIdentifiers.reserve(actionsValue.size());
+//       
+//       for (size_t index = 0; index < actionsValue.size(); ++index)
+//         actionIdentifiers.push_back(actionsValue[index]);
+//     }
+//     
+//     quantification = (std::string)const_cast<XmlRpc::XmlRpcValue&>(
+//       value)["quantification"];
+//     unordered = (bool)const_cast<XmlRpc::XmlRpcValue&>(value)["unordered"];
+//   }
+//   catch (const XmlRpc::XmlRpcException& exception) {
+//     throw XmlRpcConversionFailed(exception.getMessage());
+//   }
+//   
+//   for (size_t index = 0; index < actionIdentifiers.size(); ++index) {
+//     boost::unordered_map<std::string, Action>::const_iterator it = 
+//       actions.find(actionIdentifiers[index]);
+//       
+//     BOOST_ASSERT(it != actions.end());
+//     BOOST_ASSERT(it->second.isValid());
+//     
+//     actions_.push_back(it->second);
+//   }
+//   
+//   if (quantification == "union")
+//     quantification_ = Union;
+//   else
+//     quantification_ = Intersection;
+//   
+//   unordered_ = unordered;
+// }
 
 Task::Impl::~Impl() {  
 }
@@ -130,17 +168,24 @@ std::list<Action>::const_iterator Task::end() const {
     return std::list<Action>::const_iterator();
 }
 
-Action Task::addAction(const std::string& identifier, const std::string& type,
-    bool asserted) {
-  if (impl_.get()) {
-    Action action(identifier, type, *this, asserted);
-    
+void Task::addAction(const Action& action) {
+  if (impl_.get())
     boost::static_pointer_cast<Impl>(impl_)->actions_.push_back(action);
+}
+
+Task Task::addTask(const std::string& identifier, const std::string& type,
+    bool asserted, Quantification quantification, bool unordered) {
+  if (impl_.get()) {
+    Task task;
     
-    return action;
+    task.impl_.reset(new Impl(identifier, type, asserted, quantification,
+      unordered));
+    boost::static_pointer_cast<Impl>(impl_)->actions_.push_back(task);
+    
+    return task;
   }
   else
-    return Action();  
+    return Task();
 }
 
 void Task::clearActions() {
@@ -148,25 +193,29 @@ void Task::clearActions() {
     boost::static_pointer_cast<Impl>(impl_)->actions_.clear();
 }
 
-semantic_map_msgs::Task Task::toMessage() const {
-  semantic_map_msgs::Task message;
-  
-  message.id = getIdentifier();
-  message.type = getType();
-  
-  message.asserted = isAsserted();
-  
-  message.actions.reserve(getNumActions());
-  for (std::list<Action>::const_iterator it = begin(); it != end(); ++it)
-    message.actions.push_back(it->getIdentifier());
-    
-  if (getQuantification() == Union)
-    message.quantification = semantic_map_msgs::Task::UNION_OF;
-  else
-    message.quantification = semantic_map_msgs::Task::INTERSECTION_OF;
-  message.unordered = isUnordered();
-  
-  return message;
-}
+// XmlRpc::XmlRpcValue Task::toXmlRpcValue() const {
+//   XmlRpc::XmlRpcValue value = Action::toXmlRpcValue();
+//   
+//   if (impl_.get()) {
+//     try {
+//       size_t actionIndex = 0;
+//       for (std::list<Action>::const_iterator it = begin(); it != end();
+//           ++it, ++actionIndex)
+//         value["actions"][actionIndex] = it->getIdentifier();
+//       
+//       if (getQuantification() == Union)
+//         value["quantification"] = "union";
+//       else
+//         value["quantification"] = "intersection";
+//       
+//       value["unordered"] = isUnordered();
+//     }
+//     catch (const XmlRpc::XmlRpcException& exception) {
+//       throw XmlRpcConversionFailed(exception.getMessage());
+//     }
+//   }
+//   
+//   return value;
+// }
 
 }

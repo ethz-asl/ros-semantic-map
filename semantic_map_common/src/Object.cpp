@@ -70,6 +70,15 @@ Object::Impl::~Impl() {
 /* Accessors                                                                 */
 /*****************************************************************************/
 
+Object Object::getParentObject() const {
+  Entity parent = getParent();
+  
+  if (parent.isObject())
+    return parent;
+  else
+    return Object();
+}
+
 void Object::setFrame(const std::string& frame) {
   if (impl_.get())
     boost::static_pointer_cast<Impl>(impl_)->frame_ = frame;
@@ -119,17 +128,37 @@ Size Object::getSize() const {
 }
 
 size_t Object::getNumParts() const {
-  if (impl_.get())
-    return boost::static_pointer_cast<Impl>(impl_)->parts_.size();
-  else
-    return 0;
+  size_t numParts = 0;
+  
+  if (impl_.get()) {
+    numParts = boost::static_pointer_cast<Impl>(impl_)->parts_.size();
+      
+    for (boost::unordered_map<std::string, Object>::const_iterator
+        it = begin(); it != end(); ++it)
+      numParts += it->second.getNumParts();    
+  }
+  
+  return numParts;
 }
 
 boost::unordered_map<std::string, Object> Object::getParts() const {
-  if (impl_.get())
-    return boost::static_pointer_cast<Impl>(impl_)->parts_;
-  else
-    return boost::unordered_map<std::string, Object>();
+  boost::unordered_map<std::string, Object> parts;
+  
+  if (impl_.get()) {
+    parts = boost::static_pointer_cast<Impl>(impl_)->parts_;
+    
+    for (boost::unordered_map<std::string, Object>::const_iterator
+        it = begin(); it != end(); ++it) {
+      boost::unordered_map<std::string, Object> subParts = it->second.
+        getParts();
+      
+      for (boost::unordered_map<std::string, Object>::const_iterator
+          jt = subParts.begin(); jt != subParts.end(); ++jt)
+        subParts.insert(*jt);
+    }
+  }
+
+  return parts;
 }
 
 Object Object::getPart(const std::string& identifier) const {
@@ -137,10 +166,18 @@ Object Object::getPart(const std::string& identifier) const {
     boost::unordered_map<std::string, Object>::const_iterator it =
       boost::static_pointer_cast<Impl>(impl_)->parts_.find(identifier);
       
-    if (it != boost::static_pointer_cast<Impl>(impl_)->parts_.end())
+    if (it == boost::static_pointer_cast<Impl>(impl_)->parts_.end()) {
+      for (it = begin(); it != end(); ++it) {
+        Object part = it->second.getPart(identifier);
+        
+        if (part.isValid())
+          return part;
+      }
+    }
+    else
       return it->second;
   }
-  
+
   return Object();
 }
 
@@ -226,8 +263,10 @@ void Object::clearParts() {
 ActionOnObject Object::addAction(const std::string& identifier, const
     std::string& type, bool asserted) {
   if (impl_.get()) {
-    ActionOnObject action(identifier, type, *this, asserted);
+    ActionOnObject action;
     
+    action.impl_.reset(new ActionOnObject::Impl(identifier, type,
+      asserted, *this));
     boost::static_pointer_cast<Impl>(impl_)->actions_.insert(
       std::make_pair(identifier, action));
     
@@ -242,70 +281,72 @@ void Object::clearActions() {
     boost::static_pointer_cast<Impl>(impl_)->actions_.clear();
 }
 
-void Object::fromXmlRpcValue(const XmlRpc::XmlRpcValue& value) {
-  try {    
-    std::string identifier = (std::string)const_cast<XmlRpc::XmlRpcValue&>(
-      value)["id"];
-    std::string type = (std::string)const_cast<XmlRpc::XmlRpcValue&>(
-      value)["type"];
-    
-    if (impl_.get()) {
-      BOOST_ASSERT(identifier == getIdentifier());
-      setType(type);
-    }
-    else
-      impl_.reset(new Impl(identifier, type, *this));
-    
-    if (value.hasMember("frame_id"))
-      setFrame(const_cast<XmlRpc::XmlRpcValue&>(value)["frame_id"]);
-    else
-      setFrame(std::string());
-    
-    if (value.hasMember("stamp")) {
-      boost::posix_time::time_input_facet facet(1);
-      std::istringstream stream(const_cast<XmlRpc::XmlRpcValue&>(
-        value)["stamp"]);
-      boost::posix_time::ptime stamp;
-      
-      facet.set_iso_extended_format();
-      stream.imbue(std::locale(std::locale::classic(), &facet));
-      stream >> stamp;
-      
-      setStamp(ros::Time::fromBoost(stamp));
-    }
-    else
-      setStamp(ros::Time::now());
-    
-    Pose pose;
-    if (value.hasMember("pose"))
-      pose.fromXmlRpcValue(const_cast<XmlRpc::XmlRpcValue&>(value)["pose"]);
-    setPose(pose);
-    
-    Size size;
-    if (value.hasMember("size"))
-      size.fromXmlRpcValue(const_cast<XmlRpc::XmlRpcValue&>(value)["size"]);
-    setSize(size);
-    
-    clearParts();
-    if (value.hasMember("parts")) {
-      XmlRpc::XmlRpcValue& partsValue = const_cast<XmlRpc::XmlRpcValue&>(
-        value)["parts"];
-      
-      for (size_t index = 0; index < partsValue.size(); ++index) {
-        Object part(*this);
-        
-        part.fromXmlRpcValue(partsValue[index]);
-        
+// void Object::fromXmlRpcValue(const XmlRpc::XmlRpcValue& value) {
+//   try {    
+//     std::string identifier = (std::string)const_cast<XmlRpc::XmlRpcValue&>(
+//       value)["id"];
+//     std::string type = (std::string)const_cast<XmlRpc::XmlRpcValue&>(
+//       value)["type"];
+//     
+//     if (impl_.get()) {
+//       BOOST_ASSERT(identifier == getIdentifier());
+//       setType(type);
+//     }
+//     else
+//       impl_.reset(new Impl(identifier, type, *this));
+//     
+//     if (value.hasMember("frame_id"))
+//       setFrame(const_cast<XmlRpc::XmlRpcValue&>(value)["frame_id"]);
+//     else
+//       setFrame(std::string());
+//     
+//     if (value.hasMember("stamp")) {
+//       boost::posix_time::time_input_facet facet(1);
+//       std::istringstream stream(const_cast<XmlRpc::XmlRpcValue&>(
+//         value)["stamp"]);
+//       boost::posix_time::ptime stamp;
+//       
+//       facet.set_iso_extended_format();
+//       stream.imbue(std::locale(std::locale::classic(), &facet));
+//       stream >> stamp;
+//       
+//       setStamp(ros::Time::fromBoost(stamp));
+//     }
+//     else
+//       setStamp(ros::Time::now());
+//     
+//     Pose pose;
+//     if (value.hasMember("pose"))
+//       pose.fromXmlRpcValue(const_cast<XmlRpc::XmlRpcValue&>(value)["pose"]);
+//     setPose(pose);
+//     
+//     Size size;
+//     if (value.hasMember("size"))
+//       size.fromXmlRpcValue(const_cast<XmlRpc::XmlRpcValue&>(value)["size"]);
+//     setSize(size);
+//     
+//     clearParts();
+//     if (value.hasMember("parts")) {
+//       XmlRpc::XmlRpcValue& partsValue = const_cast<XmlRpc::XmlRpcValue&>(
+//         value)["parts"];
+//       
+//       for (size_t index = 0; index < partsValue.size(); ++index) {
+//         Object part(*this);
+//         
+//         part.fromXmlRpcValue(partsValue[index]);
+//         
 //         addPart(part);
-      }
-    }
-  }
-  catch (const XmlRpc::XmlRpcException& exception) {
-    throw XmlRpcConversionFailed(exception.getMessage());
-  }
-}
+//       }
+//     }
+//   }
+//   catch (const XmlRpc::XmlRpcException& exception) {
+//     throw XmlRpcConversionFailed(exception.getMessage());
+//   }
+// }
 
-void Object::toXmlRpcValue(XmlRpc::XmlRpcValue& value) const {
+XmlRpc::XmlRpcValue Object::toXmlRpcValue() const {
+  XmlRpc::XmlRpcValue value;
+  
   if (impl_.get()) {
     try {
       value["id"] = getIdentifier();
@@ -315,19 +356,21 @@ void Object::toXmlRpcValue(XmlRpc::XmlRpcValue& value) const {
       value["stamp"] = boost::posix_time::to_iso_extended_string(
         getStamp().toBoost());
       
-      getPose().toXmlRpcValue(value);
-      getSize().toXmlRpcValue(value["size"]);
+//       getPose().toXmlRpcValue(value);
+//       getSize().toXmlRpcValue(value["size"]);
       
       value["parts"].setSize(getNumParts());
       size_t partIndex = 0;
-      for (boost::unordered_map<std::string, Object>::const_iterator
-          it = begin(); it != end(); ++it, ++partIndex)
-        it->second.toXmlRpcValue(value["parts"][partIndex]);
+//       for (boost::unordered_map<std::string, Object>::const_iterator
+//           it = begin(); it != end(); ++it, ++partIndex)
+//         it->second.toXmlRpcValue(value["parts"][partIndex]);
     }
     catch (const XmlRpc::XmlRpcException& exception) {
       throw XmlRpcConversionFailed(exception.getMessage());
     }
   }
+  
+  return value;
 }
 
 semantic_map_msgs::Object Object::toMessage() const {

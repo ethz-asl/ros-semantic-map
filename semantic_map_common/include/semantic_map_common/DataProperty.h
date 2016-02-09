@@ -93,22 +93,13 @@ namespace semantic_map {
       */
     void clearValue();
     
-    /** \brief Convert a message to this semantic map data property
+    /** \brief Convert this semantic map data property to an XML-RPC value
       */
-    void fromMessage(const semantic_map_msgs::DataProperty& message,
-      const Map& map);
+    XmlRpc::XmlRpcValue toXmlRpcValue() const;
     
     /** \brief Convert this semantic map data property to a message
       */
     semantic_map_msgs::DataProperty toMessage() const;
-    
-    /** \brief Convert an XML-RPC value to this semantic map data property
-      */
-    void fromXmlRpcValue(const XmlRpc::XmlRpcValue& value, const Map& map);
-    
-    /** \brief Convert this semantic map data property to an XML-RPC value
-      */
-    void toXmlRpcValue(XmlRpc::XmlRpcValue& value) const;
     
   protected:
     friend class Entity;
@@ -121,7 +112,14 @@ namespace semantic_map {
     public:
       Impl(const std::string& identifier, const Entity& subject, ValueType
         valueType = Invalid, const std::string& value = std::string());
+      Impl(const XmlRpc::XmlRpcValue& value, const boost::
+        unordered_map<std::string, Entity>& entities);
+      Impl(const semantic_map_msgs::DataProperty& message, const boost::
+        unordered_map<std::string, Entity>& entities);
       virtual ~Impl();
+      
+      template <typename T> void setValue(const T& value);
+      template <typename T> T getValue() const;
       
       ValueType valueType_;
       std::string value_;
@@ -132,6 +130,16 @@ namespace semantic_map {
       */
     template <typename T> DataProperty(const std::string& identifier,
       const Entity& subject, const T& value);
+    
+    /** \brief Constructor (overloaded version taking an XML-RPC value)
+      */
+    DataProperty(const XmlRpc::XmlRpcValue& value, const boost::
+      unordered_map<std::string, Entity>& entities);
+    
+    /** \brief Constructor (overloaded version taking a message)
+      */
+    DataProperty(const semantic_map_msgs::DataProperty& message, const
+      boost::unordered_map<std::string, Entity>& entities);
   };
 };
 

@@ -29,11 +29,6 @@ namespace semantic_map {
 ActionOnObject::ActionOnObject() {
 }
 
-ActionOnObject::ActionOnObject(const std::string& identifier, const
-    std::string& type, const Object& objectActedOn, bool asserted) {
-  impl_.reset(new Impl(identifier, type, objectActedOn, asserted));
-}
-
 ActionOnObject::ActionOnObject(const ActionOnObject& src) :
   Action(src) {
 }
@@ -48,10 +43,33 @@ ActionOnObject::~ActionOnObject() {
 }
 
 ActionOnObject::Impl::Impl(const std::string& identifier, const std::string&
-    type, const Object& objectActedOn, bool asserted) :
-  Action::Impl(identifier, type, objectActedOn, asserted) {
+    type, bool asserted, const Object& objectActedOn) :
+  Action::Impl(identifier, type, asserted),
+  objectActedOn_(objectActedOn) {
   BOOST_ASSERT(objectActedOn.isValid());
 }
+
+// ActionOnObject::Impl::Impl(const XmlRpc::XmlRpcValue& value, const
+//     boost::unordered_map<std::string, Object>& objects) :
+//   Action::Impl(value) {
+//   std::string objectActedOn;
+//   
+//   try {
+//     objectActedOn = (std::string)const_cast<XmlRpc::XmlRpcValue&>(
+//       value)["object_acted_on"];
+//   }
+//   catch (const XmlRpc::XmlRpcException& exception) {
+//     throw XmlRpcConversionFailed(exception.getMessage());
+//   }  
+//   
+//   boost::unordered_map<std::string, Object>::const_iterator it = objects.
+//     find(objectActedOn);
+//       
+//   BOOST_ASSERT(it != objects.end());
+//   BOOST_ASSERT(it->second.isValid());
+//   
+//   *parent_ = it->second;
+// }
 
 ActionOnObject::Impl::~Impl() {  
 }
@@ -62,7 +80,7 @@ ActionOnObject::Impl::~Impl() {
 
 Object ActionOnObject::getObjectActedOn() const {
   if (impl_.get())
-    return getParent();
+    return boost::static_pointer_cast<Impl>(impl_)->objectActedOn_;
   else
     return Object();
 }
@@ -71,17 +89,19 @@ Object ActionOnObject::getObjectActedOn() const {
 /* Methods                                                                   */
 /*****************************************************************************/
 
-semantic_map_msgs::ActionOnObject ActionOnObject::toMessage() const {
-  semantic_map_msgs::ActionOnObject message;
-  
-  message.id = getIdentifier();
-  message.type = getType();
-
-  message.asserted = isAsserted();
-  
-  message.object_acted_on = getObjectActedOn().getIdentifier();
-  
-  return message;
-}
+// XmlRpc::XmlRpcValue ActionOnObject::toXmlRpcValue() const {
+//   XmlRpc::XmlRpcValue value = Action::toXmlRpcValue();
+//   
+//   if (impl_.get()) {
+//     try {
+//       value["object_acted_on"] = getObjectActedOn().getIdentifier();
+//     }
+//     catch (const XmlRpc::XmlRpcException& exception) {
+//       throw XmlRpcConversionFailed(exception.getMessage());
+//     }
+//   }
+//   
+//   return value;
+// }
 
 }

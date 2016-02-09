@@ -100,23 +100,17 @@ namespace semantic_map {
       */
     const std::string& getCityName() const;
     
-    /** \brief Convert an XML-RPC value to this semantic map address
-      */
-    void fromXmlRpcValue(const XmlRpc::XmlRpcValue& value);
-    
     /** \brief Convert this semantic map address to an XML-RPC value
       */
-    void toXmlRpcValue(XmlRpc::XmlRpcValue& value) const;
-    
-    /** \brief Convert a message to this semantic map address
-      */
-    void fromMessage(const semantic_map_msgs::Address& message);
+    XmlRpc::XmlRpcValue toXmlRpcValue() const;
     
     /** \brief Convert this semantic map address to a message
       */
     semantic_map_msgs::Address toMessage() const;
     
   protected:
+    friend class Map;
+    
     /** \brief The room number of this semantic map address
       */
     std::string roomNumber_;
@@ -136,6 +130,14 @@ namespace semantic_map {
     /** \brief The city name of this semantic map address
       */
     std::string cityName_;
+    
+    /** \brief Constructor (overloaded version taking an XML-RPC value)
+      */
+    Address(const XmlRpc::XmlRpcValue& value);
+    
+    /** \brief Constructor (overloaded version taking a message)
+      */
+    Address(const semantic_map_msgs::Address& message);
   };
 };
 

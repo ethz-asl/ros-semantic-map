@@ -16,6 +16,7 @@ pkg_check_modules(EIGEN3 REQUIRED eigen3)
 catkin_package(
   INCLUDE_DIRS
     include
+    ${EIGEN3_INCLUDE_DIRS}
   LIBRARIES
     semantic_map_common
   DEPENDS
@@ -38,9 +39,11 @@ add_library(
     src/Entity.cpp
     src/Exceptions.cpp
     src/Map.cpp
+    src/Mission.cpp
     src/NamespacePrefix.cpp
     src/Object.cpp
     src/ObjectProperty.cpp
+    src/Ontology.cpp
     src/Pose.cpp
     src/Property.cpp
     src/Size.cpp

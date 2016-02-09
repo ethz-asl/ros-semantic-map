@@ -75,23 +75,17 @@ namespace semantic_map {
       */
     const Eigen::Quaterniond& getOrientation() const;
     
-    /** \brief Convert an XML-RPC value to this semantic map pose
-      */
-    void fromXmlRpcValue(const XmlRpc::XmlRpcValue& value);
-    
     /** \brief Convert this semantic map pose to an XML-RPC value
       */
-    void toXmlRpcValue(XmlRpc::XmlRpcValue& value) const;
-    
-    /** \brief Convert a message to this semantic map pose
-      */
-    void fromMessage(const geometry_msgs::Pose& message);
+    XmlRpc::XmlRpcValue toXmlRpcValue() const;
     
     /** \brief Convert this semantic map pose to a message
       */
     geometry_msgs::Pose toMessage() const;
     
   protected:
+    friend class Object;
+        
     /** \brief The position of this pose
       */
     Eigen::Vector3d position_;
@@ -99,6 +93,14 @@ namespace semantic_map {
     /** \brief The orientation of this pose
       */
     Eigen::Quaterniond orientation_;
+    
+    /** \brief Constructor (overloaded version taking an XML-RPC value)
+      */
+    Pose(const XmlRpc::XmlRpcValue& value);
+    
+    /** \brief Constructor (overloaded version taking a message)
+      */
+    Pose(const geometry_msgs::Pose& message);
   };
 };
 

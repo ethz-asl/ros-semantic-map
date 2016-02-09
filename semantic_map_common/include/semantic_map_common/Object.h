@@ -69,6 +69,10 @@ namespace semantic_map {
       */
     virtual ~Object();
     
+    /** \brief Retrieve the parent object of this semantic map object
+      */
+    Object getParentObject() const;
+    
     /** \brief Set the frame identifier of this semantic map object
       */
     void setFrame(const std::string& frame);
@@ -101,11 +105,11 @@ namespace semantic_map {
       */
     Size getSize() const;
     
-    /** \brief Retrieve the number of parts of this semantic map object
+    /** \brief Retrieve the number of all parts of this semantic map object
       */
     size_t getNumParts() const;
     
-    /** \brief Retrieve the parts of this semantic map object
+    /** \brief Retrieve all parts of this semantic map object
       */
     boost::unordered_map<std::string, Object> getParts() const;
     
@@ -159,13 +163,9 @@ namespace semantic_map {
       */ 
     void clearActions();
     
-    /** \brief Convert an XML-RPC value to this semantic map object
-      */
-    void fromXmlRpcValue(const XmlRpc::XmlRpcValue& value);
-    
     /** \brief Convert this semantic map object to an XML-RPC value
       */
-    void toXmlRpcValue(XmlRpc::XmlRpcValue& value) const;
+    XmlRpc::XmlRpcValue toXmlRpcValue() const;
     
     /** \brief Convert this semantic map object to a message
       */

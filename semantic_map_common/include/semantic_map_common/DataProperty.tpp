@@ -18,8 +18,8 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <semantic_map_common/Entity.h>
 #include <semantic_map_common/DataPropertyTraits.h>
+#include <semantic_map_common/Entity.h>
 
 namespace semantic_map {
 
@@ -28,9 +28,9 @@ namespace semantic_map {
 /*****************************************************************************/
 
 template <typename T> DataProperty::DataProperty(const std::string&
-    identifier, const Entity& subject, const T& value) :
-  DataProperty(identifier, subject, DataPropertyTraits<T>::ValueType,
-    boost::lexical_cast<std::string>(value)) {
+    identifier, const Entity& subject, const T& value) {
+  this->impl_.reset(new Impl(identifier, subject, DataPropertyTraits<T>::
+    ValueType, boost::lexical_cast<std::string>(value)));
 }
 
 /*****************************************************************************/
@@ -38,20 +38,26 @@ template <typename T> DataProperty::DataProperty(const std::string&
 /*****************************************************************************/
 
 template <typename T> void DataProperty::setValue(const T& value) {
-  if (this->impl_.get()) {
-    boost::static_pointer_cast<Impl>(this->impl_)->valueType_ =
-      DataPropertyTraits<T>::ValueType;
-    boost::static_pointer_cast<Impl>(this->impl_)->value_ = boost::
-      lexical_cast<std::string>(value);
-  }
+  if (this->impl_.get())
+    boost::static_pointer_cast<Impl>(this->impl_)->template
+      setValue<T>(value);
 }
 
 template <typename T> T DataProperty::getValue() const {
   if (this->impl_.get())
-    return boost::lexical_cast<T>(boost::static_pointer_cast<Impl>(
-      this->impl_)->value_);
+    return boost::static_pointer_cast<Impl>(this->impl_)->template
+      getValue<T>();
   else
     return T();
+}
+
+template <typename T> void DataProperty::Impl::setValue(const T& value) {
+  this->valueType_ = DataPropertyTraits<T>::ValueType;
+  this->value_ = boost::lexical_cast<std::string>(value);
+}
+
+template <typename T> T DataProperty::Impl::getValue() const {
+  return boost::lexical_cast<T>(this->value_);
 }
 
 }

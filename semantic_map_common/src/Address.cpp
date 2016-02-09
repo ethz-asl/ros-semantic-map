@@ -44,6 +44,47 @@ Address::Address(const std::string& roomNumber, const std::string&
   cityName_(cityName) {
 }
 
+Address::Address(const XmlRpc::XmlRpcValue& value) {
+  try {
+    if (value.hasMember("room_nr")) {
+      std::ostringstream stream;
+      const_cast<XmlRpc::XmlRpcValue&>(value)["room_nr"].write(stream);
+      
+      roomNumber_ = stream.str();
+    }
+    
+    if (value.hasMember("floor_nr")) {
+      std::ostringstream stream;
+      const_cast<XmlRpc::XmlRpcValue&>(value)["floor_nr"].write(stream);
+      
+      floorNumber_ = stream.str();
+    }
+    
+    if (value.hasMember("street_nr")) {
+      std::ostringstream stream;
+      const_cast<XmlRpc::XmlRpcValue&>(value)["street_nr"].write(stream);
+      
+      streetNumber_ = stream.str();
+    }
+    
+    if (value.hasMember("street_name"))
+      streetName_ = (std::string)const_cast<XmlRpc::XmlRpcValue&>(
+        value)["street_name"];
+    
+    if (value.hasMember("city_name"))
+      cityName_ = (std::string)const_cast<XmlRpc::XmlRpcValue&>(
+        value)["city_name"];
+  }
+  catch (const XmlRpc::XmlRpcException& exception) {
+    throw XmlRpcConversionFailed(exception.getMessage());
+  }
+}
+
+Address::Address(const semantic_map_msgs::Address& message) :
+  Address(message.room_nr, message.floor_nr, message.street_nr,
+    message.street_name, message.city_name) {
+}
+
 Address::Address(const Address& src) :
   roomNumber_(src.roomNumber_), 
   floorNumber_(src.floorNumber_),
@@ -79,46 +120,9 @@ const std::string& Address::getCityName() const {
 /* Methods                                                                   */
 /*****************************************************************************/
 
-void Address::fromXmlRpcValue(const XmlRpc::XmlRpcValue& value) {
-  try {
-    if (value.hasMember("room_nr")) {
-      std::ostringstream stream;
-      const_cast<XmlRpc::XmlRpcValue&>(value)["room_nr"].write(stream);
-      
-      roomNumber_ = stream.str();
-    }
-    else
-      roomNumber_.clear();
-    
-    if (value.hasMember("floor_nr")) {
-      std::ostringstream stream;
-      const_cast<XmlRpc::XmlRpcValue&>(value)["floor_nr"].write(stream);
-      
-      floorNumber_ = stream.str();
-    }
-    else
-      floorNumber_.clear();
-    
-    if (value.hasMember("street_nr")) {
-      std::ostringstream stream;
-      const_cast<XmlRpc::XmlRpcValue&>(value)["street_nr"].write(stream);
-      
-      streetNumber_ = stream.str();
-    }
-    else
-      streetNumber_.clear();
-    
-    streetName_ = (std::string)const_cast<XmlRpc::XmlRpcValue&>(
-      value)["street_name"];
-    cityName_ = (std::string)const_cast<XmlRpc::XmlRpcValue&>(
-      value)["city_name"];
-  }
-  catch (const XmlRpc::XmlRpcException& exception) {
-    throw XmlRpcConversionFailed(exception.getMessage());
-  }
-}
-
-void Address::toXmlRpcValue(XmlRpc::XmlRpcValue& value) const {
+XmlRpc::XmlRpcValue Address::toXmlRpcValue() const {
+  XmlRpc::XmlRpcValue value;
+  
   try {
     value["room_nr"] = roomNumber_;
     value["floor_nr"] = floorNumber_;
@@ -129,14 +133,8 @@ void Address::toXmlRpcValue(XmlRpc::XmlRpcValue& value) const {
   catch (const XmlRpc::XmlRpcException& exception) {
     throw XmlRpcConversionFailed(exception.getMessage());
   }
-}
-
-void Address::fromMessage(const semantic_map_msgs::Address& message) {
-  roomNumber_ = message.room_nr;
-  floorNumber_ = message.floor_nr;
-  streetNumber_ = message.street_nr;
-  streetName_ = message.street_name;
-  cityName_ = message.city_name;
+  
+  return value;
 }
 
 semantic_map_msgs::Address Address::toMessage() const {

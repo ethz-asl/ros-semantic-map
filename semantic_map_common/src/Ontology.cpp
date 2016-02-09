@@ -16,10 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.       *
  ******************************************************************************/
 
-#include <semantic_map_common/ActionOnObject.h>
-#include <semantic_map_common/Task.h>
-
-#include "semantic_map_common/Action.h"
+#include "semantic_map_common/Ontology.h"
 
 namespace semantic_map {
 
@@ -27,84 +24,123 @@ namespace semantic_map {
 /* Constructors and Destructor                                               */
 /*****************************************************************************/
 
-Action::Action() {
+Ontology::Ontology() {
 }
 
-Action::Action(const Action& src) :
-  Entity(src) {
+Ontology::Ontology(const std::string& ns) {
+  impl_.reset(new Impl(ns));
 }
 
-Action::Action(const Entity& src) :
-  Entity(src) {
-  if (impl_.get())
-    BOOST_ASSERT(boost::dynamic_pointer_cast<Impl>(impl_).get());
+Ontology::Ontology(const Ontology& src) :
+  impl_(src.impl_) {
 }
 
-Action::~Action() {  
+Ontology::~Ontology() {
 }
 
-Action::Impl::Impl(const std::string& identifier, const std::string& type,
-    bool asserted) :
-  Entity::Impl(identifier, type),
-  asserted_(asserted) {
+Ontology::Impl::Impl(const std::string& ns) :
+  ns_(ns) {
 }
 
-// Action::Impl::Impl(const XmlRpc::XmlRpcValue& value, const Entity& parent) :
-//   Entity::Impl(value, parent),
-//   asserted_(false) {
-//   try {
-//     if (value.hasMember("asserted"))
-//       asserted_ = (bool)const_cast<XmlRpc::XmlRpcValue&>(value)["asserted"];
-//   }
-//   catch (const XmlRpc::XmlRpcException& exception) {
-//     throw XmlRpcConversionFailed(exception.getMessage());
-//   }  
-// }
-
-Action::Impl::~Impl() {  
+Ontology::Impl::~Impl() {
 }
 
 /*****************************************************************************/
 /* Accessors                                                                 */
 /*****************************************************************************/
 
-void Action::setAsserted(bool asserted) {
+void Ontology::setNamespace(const std::string& ns) {
   if (impl_.get())
-    boost::static_pointer_cast<Impl>(impl_)->asserted_ = asserted;
+    impl_->ns_ = ns;
 }
 
-bool Action::isAsserted() const {
+std::string Ontology::getNamespace() const {
   if (impl_.get())
-    return boost::static_pointer_cast<Impl>(impl_)->asserted_;
+    return impl_->ns_;
   else
-    return false;
+    return std::string();
 }
 
-bool Action::isActionOnObject() const {
-  return boost::dynamic_pointer_cast<ActionOnObject::Impl>(impl_).get();
+size_t Ontology::getNumImports() const {
+  if (impl_.get())
+    return impl_->imports_.size();
+  else
+    return 0;
 }
 
-bool Action::isTask() const {
-  return boost::dynamic_pointer_cast<Task::Impl>(impl_).get();
+std::list<std::string> Ontology::getImports() const {
+  if (impl_.get())
+    return impl_->imports_;
+  else
+    return std::list<std::string>();
+}
+
+size_t Ontology::getNumPrefixes() const {
+  if (impl_.get())
+    return impl_->prefixes_.size();
+  else
+    return 0;
+}
+
+boost::unordered_map<std::string, NamespacePrefix> Ontology::getPrefixes()
+    const {
+  if (impl_.get())
+    return impl_->prefixes_;
+  else
+    return boost::unordered_map<std::string, NamespacePrefix>();
+}
+
+NamespacePrefix Ontology::getPrefix(const std::string& prefix) const {
+  if (impl_.get()) {
+    boost::unordered_map<std::string, NamespacePrefix>::const_iterator it =
+      impl_->prefixes_.find(prefix);
+      
+    if (it != impl_->prefixes_.end())
+      return it->second;
+  }
+  
+  return NamespacePrefix();
+}
+
+bool Ontology::isValid() const {
+  return impl_.get();
 }
 
 /*****************************************************************************/
 /* Methods                                                                   */
 /*****************************************************************************/
 
-// XmlRpc::XmlRpcValue Action::toXmlRpcValue() const {
-//   XmlRpc::XmlRpcValue value = Entity::toXmlRpcValue();
-//   
-//   if (impl_.get()) {
-//     try {
-//       value["asserted"] = isAsserted();
-//     }
-//     catch (const XmlRpc::XmlRpcException& exception) {
-//       throw XmlRpcConversionFailed(exception.getMessage());
-//     }
-//   }
-//   
-//   return value;
-// }
+void Ontology::addImport(const std::string& import) {
+  BOOST_ASSERT(!import.empty());
+  
+  if (impl_.get())
+    impl_->imports_.push_back(import);
+}
+
+void Ontology::clearImports() {
+  if (impl_.get())
+    impl_->imports_.clear();
+}
+
+void Ontology::addPrefix(const NamespacePrefix& prefix) {
+  BOOST_ASSERT(prefix.isValid());
+  
+  if (impl_.get())
+    impl_->prefixes_.insert(std::make_pair(prefix.getPrefix(), prefix));
+}
+
+NamespacePrefix Ontology::addPrefix(const std::string& prefix, const
+    std::string& ns) {
+  NamespacePrefix namespacePrefix(prefix, ns);
+  
+  addPrefix(namespacePrefix);
+  
+  return namespacePrefix;
+}
+
+void Ontology::clearPrefixes() {
+  if (impl_.get())
+    impl_->prefixes_.clear();
+}
 
 }

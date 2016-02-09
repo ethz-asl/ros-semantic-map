@@ -1,10 +1,7 @@
-Header header                       # mission timestamp and frame id
+Ontology ontology                   # ontology of this mission
 
-string ns                           # OWL namespace of this mission
 string id                           # unique mission identifier
-
-NamespacePrefix[] prefixes          # OWL namespace prefixes of this mission
-string[] imports                    # OWL imports of this mission
+string type                         # mission type
 
 string map                          # map identifier of this mission
 

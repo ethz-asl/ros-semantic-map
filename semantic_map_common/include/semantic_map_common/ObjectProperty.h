@@ -23,6 +23,10 @@
 #ifndef ROS_SEMANTIC_MAP_OBJECT_PROPERTY_H
 #define ROS_SEMANTIC_MAP_OBJECT_PROPERTY_H
 
+#include <XmlRpcValue.h>
+
+#include <ros/exception.h>
+
 #include <semantic_map_msgs/ObjectProperty.h>
 
 #include <semantic_map_common/Entity.h>
@@ -34,6 +38,15 @@ namespace semantic_map {
   class ObjectProperty :
     public Property {
   public:
+    /** \brief Exception thrown in case of a failure to convert a semantic
+      *   map object property from/to an XML-RPC value
+      */    
+    class XmlRpcConversionFailed :
+      public ros::Exception {
+    public:
+      XmlRpcConversionFailed(const std::string& description);
+    };
+    
     /** \brief Default constructor
       */
     ObjectProperty();
@@ -58,6 +71,10 @@ namespace semantic_map {
       */
     Entity getObject() const;
     
+    /** \brief Convert this semantic map object property to an XML-RPC value
+      */
+    XmlRpc::XmlRpcValue toXmlRpcValue() const;
+    
     /** \brief Convert this semantic map object property to a message
       */
     semantic_map_msgs::ObjectProperty toMessage() const;
@@ -73,6 +90,10 @@ namespace semantic_map {
     public:
       Impl(const std::string& identifier, const Entity& subject, const
         Entity& object);
+      Impl(const XmlRpc::XmlRpcValue& value, const boost::
+        unordered_map<std::string, Entity>& entities);
+      Impl(const semantic_map_msgs::ObjectProperty& message, const boost::
+        unordered_map<std::string, Entity>& entities);
       virtual ~Impl();
       
       Entity object_;
@@ -83,6 +104,16 @@ namespace semantic_map {
       */
     ObjectProperty(const std::string& identifier, const Entity& subject,
       const Entity& object);
+    
+    /** \brief Constructor (overloaded version taking an XML-RPC value)
+      */
+    ObjectProperty(const XmlRpc::XmlRpcValue& value, const boost::
+      unordered_map<std::string, Entity>& entities);
+    
+    /** \brief Constructor (overloaded version taking a message)
+      */
+    ObjectProperty(const semantic_map_msgs::ObjectProperty& message, const
+      boost::unordered_map<std::string, Entity>& entities);
   };
 };
 

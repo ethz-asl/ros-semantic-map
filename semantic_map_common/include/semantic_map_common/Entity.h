@@ -23,6 +23,7 @@
 #ifndef ROS_SEMANTIC_MAP_ENTITY_H
 #define ROS_SEMANTIC_MAP_ENTITY_H
 
+#include <list>
 #include <string>
 
 #include <boost/shared_ptr.hpp>
@@ -32,6 +33,7 @@ namespace semantic_map {
   class Action;
   class DataProperty;
   class Map;
+  class Mission;
   class Object;
   class ObjectProperty;
   class Property;
@@ -75,11 +77,11 @@ namespace semantic_map {
     
     /** \brief Retrieve the properties of this semantic map entity
       */
-    boost::unordered_map<std::string, Property> getProperties() const;
+    boost::unordered_multimap<std::string, Property> getProperties() const;
     
     /** \brief Retrieve a property of this semantic map entity
       */
-    Property getProperty(const std::string& identifier) const;
+    std::list<Property> getProperties(const std::string& identifier) const;
     
     /** \brief True, if this semantic map entity has a parent
       */
@@ -88,6 +90,10 @@ namespace semantic_map {
     /** \brief True, if this semantic map entity is a semantic map
       */
     bool isMap() const;
+    
+    /** \brief True, if this semantic map entity is a semantic map mission
+      */
+    bool isMission() const;
     
     /** \brief True, if this semantic map entity is a semantic map object
       */
@@ -117,6 +123,11 @@ namespace semantic_map {
       */
     void clearProperties();
     
+    /** \brief Operator for comparing this semantic map entity to another
+      *   entity
+      */
+    bool operator==(const Entity& entity) const;
+    
   protected:
     friend class DataProperty;
     friend class ObjectProperty;
@@ -134,7 +145,7 @@ namespace semantic_map {
       
       const boost::shared_ptr<Entity> parent_;
       
-      boost::unordered_map<std::string, Property> properties_;
+      boost::unordered_multimap<std::string, Property> properties_;
     };
     
     /** \brief The semantic map entity's implementation

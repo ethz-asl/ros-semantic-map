@@ -19,6 +19,7 @@ add_message_files(
     NamespacePrefix.msg
     Object.msg
     ObjectProperty.msg
+    Ontology.msg
     Size.msg
     Task.msg
 )

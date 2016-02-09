@@ -39,6 +39,16 @@ DataProperty::XmlRpcConversionFailed::XmlRpcConversionFailed(const
 DataProperty::DataProperty() {
 }
 
+DataProperty::DataProperty(const XmlRpc::XmlRpcValue& value, const
+    boost::unordered_map<std::string, Entity>& entities) {
+  impl_.reset(new Impl(value, entities));
+}
+
+DataProperty::DataProperty(const semantic_map_msgs::DataProperty& message,
+    const boost::unordered_map<std::string, Entity>& entities) {
+  impl_.reset(new Impl(message, entities));
+}
+
 DataProperty::DataProperty(const DataProperty& src) :
   Property(src) {
 }
@@ -58,6 +68,51 @@ DataProperty::Impl::Impl(const std::string& identifier, const Entity&
   valueType_(valueType),
   value_(value) {
   BOOST_ASSERT(valueType != Invalid);
+}
+
+DataProperty::Impl::Impl(const XmlRpc::XmlRpcValue& value, const
+    boost::unordered_map<std::string, Entity>& entities) :
+  Property::Impl(value, entities) {
+  try {
+    if (value.hasMember("value")) {
+      XmlRpc::XmlRpcValue::Type type = const_cast<XmlRpc::XmlRpcValue&>(
+        value)["value"].getType();
+      
+      if (type == XmlRpc::XmlRpcValue::TypeString)
+        setValue<std::string>(const_cast<XmlRpc::XmlRpcValue&>(
+          value)["value"]);
+      else if (type == XmlRpc::XmlRpcValue::TypeBoolean)
+        setValue<bool>(const_cast<XmlRpc::XmlRpcValue&>(value)["value"]);
+      else if (type == XmlRpc::XmlRpcValue::TypeDouble)
+        setValue<double>(const_cast<XmlRpc::XmlRpcValue&>(value)["value"]);
+      else if (type == XmlRpc::XmlRpcValue::TypeInt)
+        setValue<int>(const_cast<XmlRpc::XmlRpcValue&>(value)["value"]);
+    }
+  }
+  catch (const XmlRpc::XmlRpcException& exception) {
+    throw XmlRpcConversionFailed(exception.getMessage());
+  }
+
+  BOOST_ASSERT(valueType_ != Invalid);
+}
+
+DataProperty::Impl::Impl(const semantic_map_msgs::DataProperty& message,
+    const boost::unordered_map<std::string, Entity>& entities) :
+  Property::Impl(message, entities) {
+  if (message.value_type == semantic_map_msgs::DataProperty::
+      VALUE_TYPE_STRING)
+    setValue<std::string>(message.value);
+  else if (message.value_type == semantic_map_msgs::DataProperty::
+      VALUE_TYPE_BOOL)
+    setValue<bool>(boost::lexical_cast<bool>(message.value));
+  else if (message.value_type == semantic_map_msgs::DataProperty::
+      VALUE_TYPE_FLOAT)
+    setValue<double>(boost::lexical_cast<double>(message.value));
+  else if (message.value_type == semantic_map_msgs::DataProperty::
+      VALUE_TYPE_INT)
+    setValue<int>(boost::lexical_cast<int>(message.value));
+  
+  BOOST_ASSERT(valueType_ != Invalid);
 }
 
 DataProperty::Impl::~Impl() {
@@ -85,49 +140,13 @@ void DataProperty::clearValue() {
   }
 }
 
-void DataProperty::fromXmlRpcValue(const XmlRpc::XmlRpcValue& value, const
-    Map& map) {
-  try {
-    std::string identifier = (std::string)const_cast<XmlRpc::XmlRpcValue&>(
-      value)["id"];
-    std::string subject = (std::string)const_cast<XmlRpc::XmlRpcValue&>(
-      value)["subject"];
-      
-//     if (impl_.get()) {
-//       setIdentifier(identifier);
-//       setSubject(map.getEntity(subject));
-//     }
-//     else
-//       impl_.reset(new Impl(identifier, map.getEntity(subject)));
-      
-    clearValue();
-    if (value.hasMember("value")) {
-      XmlRpc::XmlRpcValue::Type type = const_cast<XmlRpc::XmlRpcValue&>(
-        value)["value"].getType();
-      
-      if (type == XmlRpc::XmlRpcValue::TypeString)
-        setValue<std::string>(const_cast<XmlRpc::XmlRpcValue&>(
-          value)["value"]);
-      else if (type == XmlRpc::XmlRpcValue::TypeBoolean)
-        setValue<bool>(const_cast<XmlRpc::XmlRpcValue&>(value)["value"]);
-      else if (type == XmlRpc::XmlRpcValue::TypeDouble)
-        setValue<double>(const_cast<XmlRpc::XmlRpcValue&>(value)["value"]);
-      else if (type == XmlRpc::XmlRpcValue::TypeInt)
-        setValue<int>(const_cast<XmlRpc::XmlRpcValue&>(value)["value"]);
-    }
-  }
-  catch (const XmlRpc::XmlRpcException& exception) {
-    throw XmlRpcConversionFailed(exception.getMessage());
-  }
-}
-
-void DataProperty::toXmlRpcValue(XmlRpc::XmlRpcValue& value) const {
+XmlRpc::XmlRpcValue DataProperty::toXmlRpcValue() const {
+  XmlRpc::XmlRpcValue value = Property::toXmlRpcValue();
+  
   if (impl_.get()) {
     try {
-      value["id"] = getIdentifier();
-      value["subject"] = getSubject().getIdentifier();
-      
       ValueType valueType = getValueType();
+      
       if (valueType == String)
         value["value"] = getValue<std::string>();
       else if (valueType == Boolean)
@@ -143,40 +162,16 @@ void DataProperty::toXmlRpcValue(XmlRpc::XmlRpcValue& value) const {
       throw XmlRpcConversionFailed(exception.getMessage());
     }
   }
-}
-
-void DataProperty::fromMessage(const semantic_map_msgs::DataProperty&
-    message, const Map& map) {
-//   if (impl_.get()) {
-//     setIdentifier(message.id);
-//     setSubject(map.getEntity(message.subject));
-//   }
-//   else
-//     impl_.reset(new Impl(message.id, map.getEntity(message.subject)));
   
-  if (message.value_type == semantic_map_msgs::DataProperty::
-      VALUE_TYPE_STRING)
-    setValue<std::string>(message.value);
-  else if (message.value_type == semantic_map_msgs::DataProperty::
-      VALUE_TYPE_BOOL)
-    setValue<bool>(boost::lexical_cast<bool>(message.value));
-  else if (message.value_type == semantic_map_msgs::DataProperty::
-      VALUE_TYPE_FLOAT)
-    setValue<double>(boost::lexical_cast<double>(message.value));
-  else if (message.value_type == semantic_map_msgs::DataProperty::
-      VALUE_TYPE_INT)
-    setValue<int>(boost::lexical_cast<int>(message.value));
-  else
-    clearValue();
+  return value;
 }
 
 semantic_map_msgs::DataProperty DataProperty::toMessage() const {
-  semantic_map_msgs::DataProperty message;
-  
-  message.id = getIdentifier();
-  message.subject = getSubject().getIdentifier();
+  semantic_map_msgs::DataProperty message = Property::
+    toMessage<semantic_map_msgs::DataProperty>();
   
   ValueType valueType = getValueType();
+  
   if (valueType == String)
     message.value_type = semantic_map_msgs::DataProperty::VALUE_TYPE_STRING;
   else if (valueType == Boolean)
@@ -185,8 +180,6 @@ semantic_map_msgs::DataProperty DataProperty::toMessage() const {
     message.value_type = semantic_map_msgs::DataProperty::VALUE_TYPE_FLOAT;
   else if (valueType == Integer)
     message.value_type = semantic_map_msgs::DataProperty::VALUE_TYPE_INT;
-  else
-    message.value_type = semantic_map_msgs::DataProperty::VALUE_TYPE_INVALID;
   
   message.value = getValue<std::string>();
   

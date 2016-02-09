@@ -16,73 +16,49 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.       *
  ******************************************************************************/
 
-/** \file Action.h
-  * \brief Header file providing the Action class interface
+/** \file XmlRpcValueConversions.h
+  * \brief Header file providing the XmlRpcValueConversions class interface
   */
 
-#ifndef ROS_SEMANTIC_MAP_ACTION_H
-#define ROS_SEMANTIC_MAP_ACTION_H
+#ifndef ROS_SEMANTIC_MAP_XML_RPC_CONVERSIONS_H
+#define ROS_SEMANTIC_MAP_XML_RPC_CONVERSIONS_H
 
+#include <string>
+
+#include <XmlRpcValue.h>
+
+#include <ros/exception.h>
+
+#include <semantic_map_common/Action.h>
 #include <semantic_map_common/Entity.h>
+#include <semantic_map_common/Property.h>
 
 namespace semantic_map {
-  class Object;
-  
-  /** \brief Semantic map action
-    */    
-  class Action :
-    public Entity {
-  public:
-    /** \brief Default constructor
+  namespace conversions {
+    /** \brief Semantic map XML-RPC value conversions
       */
-    Action();
-    
-    /** \brief Copy constructor
-      */
-    Action(const Action& src);
-    
-    /** \brief Copy constructor (overloaded version taking an entity)
-      */
-    Action(const Entity& src);
-    
-    /** \brief Destructor
-      */
-    virtual ~Action();
-    
-    /** \brief Set to true to make this semantic map action an
-      *   asserted action
-      */
-    void setAsserted(bool asserted);
-    
-    /** \brief True, if this semantic map action is an asserted action
-      */
-    bool isAsserted() const;
-    
-    /** \brief True, if this semantic map action is an action on a
-      *   semantic map object
-      */
-    bool isActionOnObject() const;
-    
-    /** \brief True, if this semantic map action is a task
-      */
-    bool isTask() const;
-    
-  protected:
-    friend class Entity;
-    friend class Task;
-    
-    /** \brief Semantic map action (implementation)
-      */
-    class Impl :
-      public Entity::Impl {
+    class XmlRpcValueConversions {
     public:
-      Impl(const std::string& identifier, const std::string& type,
-        bool asserted);
-      virtual ~Impl();
+      /** \brief Exception thrown in case of a failure to convert from
+        *   or to an XML-RPC value
+        */    
+      class ConversionFailed :
+        public ros::Exception {
+      public:
+        ConversionFailed(const std::string& description);
+      };
       
-      bool asserted_;
+      /** \brief Default constructor
+        */
+      XmlRpcValueConversions();
+      
+      /** \brief Destructor
+        */
+      virtual ~XmlRpcValueConversions();
     };
   };
 };
+
+#include <semantic_map_conversions/XmlRpcValueConversions.tpp>
 
 #endif

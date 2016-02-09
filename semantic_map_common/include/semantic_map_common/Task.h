@@ -24,8 +24,7 @@
 #define ROS_SEMANTIC_MAP_TASK_H
 
 #include <list>
-
-#include <semantic_map_msgs/Task.h>
+#include <string>
 
 #include <semantic_map_common/Action.h>
 
@@ -103,39 +102,35 @@ namespace semantic_map {
     
     /** \brief Add an action to this semantic map task
       */
-    Action addAction(const std::string& identifier, const std::string&
-      type, bool asserted = false);
+    void addAction(const Action& action);
+    
+    /** \brief Add a subtask to this semantic map task
+      */
+    Task addTask(const std::string& identifier, const std::string& type,
+      bool asserted = false, Quantification quantification = Intersection,
+      bool unordered = false);
     
     /** \brief Clear the actions of this semantic map task
       */ 
     void clearActions();
     
-    /** \brief Convert this semantic map task to a message
-      */
-    semantic_map_msgs::Task toMessage() const;
-    
   protected:
     friend class Action;
+    friend class Mission;
     
     /** \brief Semantic map task (implementation)
       */
     class Impl :
       public Action::Impl {
     public:
-      Impl(const std::string& identifier, const std::string& type, const
-        Entity& parent, bool asserted);
+      Impl(const std::string& identifier, const std::string& type,
+        bool asserted, Quantification quantification, bool unordered);
       virtual ~Impl();
       
       std::list<Action> actions_;
       Quantification quantification_;
       bool unordered_;
-    };
-    
-    /** \brief Constructor (overloaded version taking an identifier, a type,
-      *   a parent entity, and an asserted flag)
-      */
-    Task(const std::string& identifier, const std::string& type, const
-      Entity& parent, bool asserted = false);
+    };    
   };
 };
 

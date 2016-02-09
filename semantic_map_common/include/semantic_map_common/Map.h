@@ -24,20 +24,15 @@
 #define ROS_SEMANTIC_MAP_H
 
 #include <string>
-#include <list>
 
-#include <boost/shared_ptr.hpp>
 #include <boost/unordered_map.hpp>
 
-#include <XmlRpcValue.h>
-
-#include <ros/exception.h>
 #include <ros/time.h>
 
 #include <semantic_map_common/Address.h>
 #include <semantic_map_common/Entity.h>
-#include <semantic_map_common/NamespacePrefix.h>
 #include <semantic_map_common/Object.h>
+#include <semantic_map_common/Ontology.h>
 
 namespace semantic_map {
   /** \brief Semantic map
@@ -45,21 +40,12 @@ namespace semantic_map {
   class Map :
     public Entity {
   public:
-    /** \brief Exception thrown in case of a failure to convert a semantic
-      *   map from/to an XML-RPC value
-      */    
-    class XmlRpcConversionFailed :
-      public ros::Exception {
-    public:
-      XmlRpcConversionFailed(const std::string& description);
-    };
-    
     /** \brief Default constructor
       */
     Map();
     
-    /** \brief Constructor (overloaded version taking an identifier, a
-      *   namespace, a frame identifier, and a timestamp
+    /** \brief Constructor (overloaded version taking an identifier, a type,
+      *   an ontology, a frame identifier, and a timestamp)
       */
     Map(const std::string& identifier, const std::string& type, const
       std::string& ns = "http://ros.org/semantic_map/map.owl", const
@@ -77,13 +63,13 @@ namespace semantic_map {
       */
     virtual ~Map();
     
-    /** \brief Set the namespace of this semantic map
+    /** \brief Set the ontology of this semantic map
       */
-    void setNamespace(const std::string& ns);
+    void setOntology(const Ontology& ontology);
     
-    /** \brief Retrieve the namespace of this semantic map
+    /** \brief Retrieve the ontology of this semantic map
       */
-    std::string getNamespace() const;
+    Ontology getOntology() const;
     
     /** \brief Set the frame identifier of this semantic map
       */
@@ -109,42 +95,17 @@ namespace semantic_map {
       */
     Address getAddress() const;
 
-    /** \brief Retrieve the number of objects of this semantic map
+    /** \brief Retrieve the number of all objects of this semantic map
       */
     size_t getNumObjects() const;
     
-    /** \brief Retrieve the objects of this semantic map
+    /** \brief Retrieve all objects of this semantic map
       */
     boost::unordered_map<std::string, Object> getObjects() const;
     
     /** \brief Retrieve an object of this semantic map
       */
     Object getObject(const std::string& identifier) const;    
-    
-    /** \brief Retrieve the number of imports of this semantic map
-      */
-    size_t getNumImports() const;
-    
-    /** \brief Retrieve the imports of this semantic map
-      */
-    std::list<std::string> getImports() const;
-    
-    /** \brief Retrieve the number of namespace prefixes of this semantic
-      *   map
-      */
-    size_t getNumPrefixes() const;
-    
-    /** \brief Retrieve the namespace prefixes of this semantic map
-      */
-    boost::unordered_map<std::string, NamespacePrefix> getPrefixes() const;
-    
-    /** \brief Retrieve a namespace prefix of this semantic map
-      */
-    NamespacePrefix getPrefix(const std::string& prefix) const;
-    
-    /** \brief True, if this semantic map is valid
-      */
-    bool isValid() const;
     
     /** \brief Retrieve the begin iterator of this semantic map
       */ 
@@ -169,41 +130,14 @@ namespace semantic_map {
     /** \brief Clear the objects of this semantic map
       */
     void clearObjects();
-    
-    /** \brief Add an import to this semantic map
-      */
-    void addImport(const std::string& import);
-    
-    /** \brief Clear the imports of this semantic map
-      */
-    void clearImports();
-    
-    /** \brief Add a namespace prefix to this semantic map (overloaded
-      *   version taking a namespace prefix)
-      */
-    void addPrefix(const NamespacePrefix& prefix);
-    
-    /** \brief Add a namespace prefix to this semantic map (overloaded
-      *   version taking a prefix and a namespace)
-      */
-    NamespacePrefix addPrefix(const std::string& prefix, const
-      std::string& ns);
-    
-    /** \brief Clear the namespace prefixes of this semantic map
-      */
-    void clearPrefixes();
-    
-    /** \brief Convert an XML-RPC value to this semantic map
-      */
-    void fromXmlRpcValue(const XmlRpc::XmlRpcValue& value);
-    
-    /** \brief Convert this semantic map to an XML-RPC value
-      */
-    void toXmlRpcValue(XmlRpc::XmlRpcValue& value) const;
-    
+
     /** \brief Operator for retrieving an object of this semantic map
       */
     Object operator[](const std::string& identifier) const;
+    
+    /** \brief Operator for comparing this semantic map to another map
+      */
+    bool operator==(const Map& map) const;
     
   protected:
     friend class Entity;
@@ -217,7 +151,7 @@ namespace semantic_map {
         std::string& ns, const std::string& frame, const ros::Time& stamp);
       virtual ~Impl();
       
-      std::string ns_;
+      Ontology ontology_;
       
       std::string frame_;
       ros::Time stamp_;
@@ -225,9 +159,6 @@ namespace semantic_map {
       Address address_;
       
       boost::unordered_map<std::string, Object> objects_;
-      
-      std::list<std::string> imports_;
-      boost::unordered_map<std::string, NamespacePrefix> prefixes_;
     };
   };
 };

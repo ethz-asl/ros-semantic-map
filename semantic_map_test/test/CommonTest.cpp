@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (C) 2016 by Ralf Kaestner                                        *
+ * Copyright (C) 2014 by Ralf Kaestner                                        *
  * ralf.kaestner@gmail.com                                                    *
  *                                                                            *
  * This program is free software; you can redistribute it and/or modify       *
@@ -16,38 +16,18 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.       *
  ******************************************************************************/
 
-#include <semantic_map_common/DataProperty.h>
+#include <gtest/gtest.h>
 
-namespace semantic_map {
+#include <semantic_map_common/Map.h>
 
-/*****************************************************************************/
-/* Constructors and Destructor                                               */
-/*****************************************************************************/
+using namespace semantic_map;
 
-template <class M> Entity::Impl::Impl(const M& message, const Entity&
-    parent) :
-  identifier_(message.id),
-  type_(message.type),
-  parent_(new Entity(parent)) {
-  BOOST_ASSERT(!message.id.empty());
-  BOOST_ASSERT(!message.type.empty());
-}
-
-/*****************************************************************************/
-/* Methods                                                                   */
-/*****************************************************************************/
-
-template <typename T> DataProperty Entity::addProperty(const std::string&
-    identifier, const T& value) {
-  if (impl_.get()) {
-    DataProperty property(identifier, *this, value);
-    
-    impl_->properties_.insert(std::make_pair(identifier, property));
-    
-    return property;
-  }
-  else
-    return DataProperty();
-}
-
+TEST(SemanticMapCommon, Map) {
+  ros::Time::init();
+  
+  Map map("TestMap", "TestMapClass");
+  Object object_1 = map.addObject("TestObject1", "TestObjectClass");
+  
+  EXPECT_TRUE(map["TestObject1"].isValid());
+  EXPECT_FALSE(map["TestObjectX"].isValid());
 }

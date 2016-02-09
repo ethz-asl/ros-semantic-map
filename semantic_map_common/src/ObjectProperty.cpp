@@ -24,12 +24,28 @@ namespace semantic_map {
 /* Constructors and Destructor                                               */
 /*****************************************************************************/
 
+ObjectProperty::XmlRpcConversionFailed::XmlRpcConversionFailed(const
+    std::string& description) :
+  ros::Exception("XML-RPC value conversion of semantic map object property "
+    "failed: "+description) {
+}
+
 ObjectProperty::ObjectProperty() {
 }
 
 ObjectProperty::ObjectProperty(const std::string& identifier, const
     Entity& subject, const Entity& object) {
   impl_.reset(new Impl(identifier, subject, object));
+}
+
+ObjectProperty::ObjectProperty(const XmlRpc::XmlRpcValue& value, const
+    boost::unordered_map<std::string, Entity>& entities) {
+  impl_.reset(new Impl(value, entities));
+}
+
+ObjectProperty::ObjectProperty(const semantic_map_msgs::ObjectProperty&
+    message, const boost::unordered_map<std::string, Entity>& entities) {
+  impl_.reset(new Impl(message, entities));
 }
 
 ObjectProperty::ObjectProperty(const ObjectProperty& src) :
@@ -50,6 +66,39 @@ ObjectProperty::Impl::Impl(const std::string& identifier, const Entity&
   Property::Impl(identifier, subject),
   object_(object) {
   BOOST_ASSERT(object.isValid());
+}
+
+ObjectProperty::Impl::Impl(const XmlRpc::XmlRpcValue& value, const
+    boost::unordered_map<std::string, Entity>& entities) :
+  Property::Impl(value, entities) {
+  std::string object;
+  
+  try {
+    object = (std::string)const_cast<XmlRpc::XmlRpcValue&>(value)["object"];
+  }
+  catch (const XmlRpc::XmlRpcException& exception) {
+    throw XmlRpcConversionFailed(exception.getMessage());
+  }  
+  
+  boost::unordered_map<std::string, Entity>::const_iterator it = entities.
+    find(object);
+      
+  BOOST_ASSERT(it != entities.end());
+  BOOST_ASSERT(it->second.isValid());
+  
+  object_ = it->second;
+}
+
+ObjectProperty::Impl::Impl(const semantic_map_msgs::ObjectProperty&
+    message, const boost::unordered_map<std::string, Entity>& entities) :
+  Property::Impl(message, entities) {
+  boost::unordered_map<std::string, Entity>::const_iterator it = entities.
+    find(message.object);
+
+  BOOST_ASSERT(it != entities.end());
+  BOOST_ASSERT(it->second.isValid());
+  
+  object_ = it->second;
 }
 
 ObjectProperty::Impl::~Impl() {
@@ -77,11 +126,25 @@ Entity ObjectProperty::getObject() const {
 /* Methods                                                                   */
 /*****************************************************************************/
 
-semantic_map_msgs::ObjectProperty ObjectProperty::toMessage() const {
-  semantic_map_msgs::ObjectProperty message;
+XmlRpc::XmlRpcValue ObjectProperty::toXmlRpcValue() const {
+  XmlRpc::XmlRpcValue value = Property::toXmlRpcValue();
   
-  message.id = getIdentifier();
-  message.subject = getSubject().getIdentifier();
+  if (impl_.get()) {
+    try {
+      value["object"] = getObject().getIdentifier();
+    }
+    catch (const XmlRpc::XmlRpcException& exception) {
+      throw XmlRpcConversionFailed(exception.getMessage());
+    }
+  }
+  
+  return value;
+}
+
+semantic_map_msgs::ObjectProperty ObjectProperty::toMessage() const {
+  semantic_map_msgs::ObjectProperty message = Property::
+    toMessage<semantic_map_msgs::ObjectProperty>();
+  
   message.object = getObject().getIdentifier();
   
   return message;

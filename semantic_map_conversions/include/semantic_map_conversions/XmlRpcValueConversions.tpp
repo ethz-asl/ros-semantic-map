@@ -16,38 +16,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.       *
  ******************************************************************************/
 
-#include <semantic_map_common/DataProperty.h>
-
-namespace semantic_map {
-
-/*****************************************************************************/
-/* Constructors and Destructor                                               */
-/*****************************************************************************/
-
-template <class M> Entity::Impl::Impl(const M& message, const Entity&
-    parent) :
-  identifier_(message.id),
-  type_(message.type),
-  parent_(new Entity(parent)) {
-  BOOST_ASSERT(!message.id.empty());
-  BOOST_ASSERT(!message.type.empty());
-}
+namespace semantic_map { namespace conversions {
 
 /*****************************************************************************/
 /* Methods                                                                   */
 /*****************************************************************************/
 
-template <typename T> DataProperty Entity::addProperty(const std::string&
-    identifier, const T& value) {
-  if (impl_.get()) {
-    DataProperty property(identifier, *this, value);
-    
-    impl_->properties_.insert(std::make_pair(identifier, property));
-    
-    return property;
-  }
-  else
-    return DataProperty();
-}
-
-}
+}}

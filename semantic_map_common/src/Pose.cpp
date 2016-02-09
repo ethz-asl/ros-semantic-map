@@ -44,6 +44,60 @@ Pose::Pose(double x, double y, double z, double i, double j, double k,
   orientation_.w() = w;
 }
 
+Pose::Pose(const XmlRpc::XmlRpcValue& value) {
+  position_.setZero();
+  orientation_.setIdentity();
+  
+  try {
+    if (value.hasMember("position")) {
+      XmlRpc::XmlRpcValue& position = const_cast<XmlRpc::XmlRpcValue&>(
+        value)["position"];
+      
+      if (position.hasMember("x"))
+        position_[0] = position["x"];
+      
+      if (position.hasMember("y"))
+        position_[1] = position["y"];
+      
+      if (position.hasMember("z"))
+        position_[2] = position["z"];
+    }
+    
+    if (value.hasMember("orientation")) {
+      XmlRpc::XmlRpcValue& orientation = const_cast<XmlRpc::XmlRpcValue&>(
+        value)["orientation"];
+      
+      if (orientation.hasMember("x"))
+        orientation_.x() = orientation["x"];
+      
+      if (orientation.hasMember("y"))
+        orientation_.y() = orientation["y"];
+      
+      if (orientation.hasMember("z"))
+        orientation_.z() = orientation["z"];
+      
+      if (orientation.hasMember("w"))
+        orientation_.w() = orientation["w"];
+      
+      orientation_.normalize();
+    }
+  }
+  catch (const XmlRpc::XmlRpcException& exception) {
+    throw XmlRpcConversionFailed(exception.getMessage());
+  }
+}
+
+Pose::Pose(const geometry_msgs::Pose& message) {
+  position_[0] = message.position.x;
+  position_[1] = message.position.y;
+  position_[2] = message.position.z;
+  
+  orientation_.x() = message.orientation.x;
+  orientation_.y() = message.orientation.y;
+  orientation_.z() = message.orientation.z;
+  orientation_.w() = message.orientation.w;
+}
+
 Pose::Pose(const Pose& src) :
   position_(src.position_),
   orientation_(src.orientation_) {
@@ -76,65 +130,9 @@ const Eigen::Quaterniond& Pose::getOrientation() const {
 /* Methods                                                                   */
 /*****************************************************************************/
 
-void Pose::fromXmlRpcValue(const XmlRpc::XmlRpcValue& value) {
-  try {
-    if (value.hasMember("position")) {
-      XmlRpc::XmlRpcValue& position = const_cast<XmlRpc::XmlRpcValue&>(
-        value)["position"];
-      
-      if (position.hasMember("x"))
-        position_[0] = position["x"];
-      else
-        position_[0] = 0.0;
-      
-      if (position.hasMember("y"))
-        position_[1] = position["y"];
-      else
-        position_[1] = 0.0;
-      
-      if (position.hasMember("z"))
-        position_[2] = position["z"];
-      else
-        position_[2] = 0.0;
-    }
-    else
-      position_.setZero();
-    
-    if (value.hasMember("orientation")) {
-      XmlRpc::XmlRpcValue& orientation = const_cast<XmlRpc::XmlRpcValue&>(
-        value)["orientation"];
-      
-      if (orientation.hasMember("x"))
-        orientation_.x() = orientation["x"];
-      else
-        orientation_.x() = 0.0;
-      
-      if (orientation.hasMember("y"))
-        orientation_.y() = orientation["y"];
-      else
-        orientation_.y() = 0.0;
-      
-      if (orientation.hasMember("z"))
-        orientation_.z() = orientation["z"];
-      else
-        orientation_.z() = 0.0;
-      
-      if (orientation.hasMember("w"))
-        orientation_.w() = orientation["w"];
-      else
-        orientation_.w() = 1.0;
-      
-      orientation_.normalize();
-    }
-    else
-      orientation_.setIdentity();
-  }
-  catch (const XmlRpc::XmlRpcException& exception) {
-    throw XmlRpcConversionFailed(exception.getMessage());
-  }
-}
-
-void Pose::toXmlRpcValue(XmlRpc::XmlRpcValue& value) const {
+XmlRpc::XmlRpcValue Pose::toXmlRpcValue() const {
+  XmlRpc::XmlRpcValue value;
+  
   try {
     value["position"]["x"] = position_[0];
     value["position"]["y"] = position_[1];
@@ -148,17 +146,8 @@ void Pose::toXmlRpcValue(XmlRpc::XmlRpcValue& value) const {
   catch (const XmlRpc::XmlRpcException& exception) {
     throw XmlRpcConversionFailed(exception.getMessage());
   }
-}
 
-void Pose::fromMessage(const geometry_msgs::Pose& message) {
-  position_[0] = message.position.x;
-  position_[1] = message.position.y;
-  position_[2] = message.position.z;
-  
-  orientation_.x() = message.orientation.x;
-  orientation_.y() = message.orientation.y;
-  orientation_.z() = message.orientation.z;
-  orientation_.w() = message.orientation.w;
+  return value;
 }
 
 geometry_msgs::Pose Pose::toMessage() const {

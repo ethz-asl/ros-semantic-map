@@ -38,6 +38,30 @@ Size::Size(double width, double height, double depth) {
   dimensions_[2] = height;
 }
 
+Size::Size(const XmlRpc::XmlRpcValue& value) {
+  dimensions_.setZero();
+  
+  try {
+    if (value.hasMember("x"))
+      dimensions_[0] = const_cast<XmlRpc::XmlRpcValue&>(value)["x"];
+    
+    if (value.hasMember("y"))
+      dimensions_[1] = const_cast<XmlRpc::XmlRpcValue&>(value)["y"];
+    
+    if (value.hasMember("z"))
+      dimensions_[2] = const_cast<XmlRpc::XmlRpcValue&>(value)["z"];
+  }
+  catch (const XmlRpc::XmlRpcException& exception) {
+    throw XmlRpcConversionFailed(exception.getMessage());
+  }
+}
+
+Size::Size(const semantic_map_msgs::Size& message) {
+  dimensions_[0] = message.x;
+  dimensions_[1] = message.y;
+  dimensions_[2] = message.z;
+}
+
 Size::Size(const Size& src) :
   dimensions_(src.dimensions_) {
 }
@@ -85,29 +109,9 @@ const Eigen::Vector3d& Size::getDimensions() const {
 /* Methods                                                                   */
 /*****************************************************************************/
 
-void Size::fromXmlRpcValue(const XmlRpc::XmlRpcValue& value) {
-  try {
-    if (value.hasMember("x"))
-      dimensions_[0] = const_cast<XmlRpc::XmlRpcValue&>(value)["x"];
-    else
-      dimensions_[0] = 0.0;
-    
-    if (value.hasMember("y"))
-      dimensions_[1] = const_cast<XmlRpc::XmlRpcValue&>(value)["y"];
-    else
-      dimensions_[1] = 0.0;
-    
-    if (value.hasMember("z"))
-      dimensions_[2] = const_cast<XmlRpc::XmlRpcValue&>(value)["z"];
-    else
-      dimensions_[2] = 0.0;
-  }
-  catch (const XmlRpc::XmlRpcException& exception) {
-    throw XmlRpcConversionFailed(exception.getMessage());
-  }
-}
-
-void Size::toXmlRpcValue(XmlRpc::XmlRpcValue& value) const {
+XmlRpc::XmlRpcValue Size::toXmlRpcValue() const {
+  XmlRpc::XmlRpcValue value;
+  
   try {
     value["x"] = dimensions_[0];
     value["y"] = dimensions_[1];
@@ -116,12 +120,8 @@ void Size::toXmlRpcValue(XmlRpc::XmlRpcValue& value) const {
   catch (const XmlRpc::XmlRpcException& exception) {
     throw XmlRpcConversionFailed(exception.getMessage());
   }
-}
-
-void Size::fromMessage(const semantic_map_msgs::Size& message) {
-  dimensions_[0] = message.x;
-  dimensions_[1] = message.y;
-  dimensions_[2] = message.z;
+  
+  return value;
 }
 
 semantic_map_msgs::Size Size::toMessage() const {

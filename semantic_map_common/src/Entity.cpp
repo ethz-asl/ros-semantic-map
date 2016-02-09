@@ -18,6 +18,7 @@
 
 #include <semantic_map_common/Action.h>
 #include <semantic_map_common/Map.h>
+#include <semantic_map_common/Mission.h>
 #include <semantic_map_common/Object.h>
 #include <semantic_map_common/ObjectProperty.h>
 
@@ -47,6 +48,25 @@ Entity::Impl::Impl(const std::string& identifier, const std::string& type,
   BOOST_ASSERT(!identifier.empty());
   BOOST_ASSERT(!type.empty());
 }
+
+// Entity::Impl::Impl(const XmlRpc::XmlRpcValue& value, const Entity& parent) :
+//   parent_(new Entity(parent)) {
+//   std::string identifier, type;
+//   
+//   try {
+//     identifier = (std::string)const_cast<XmlRpc::XmlRpcValue&>(value)["id"];
+//     type = (std::string)const_cast<XmlRpc::XmlRpcValue&>(value)["type"];
+//   }
+//   catch (const XmlRpc::XmlRpcException& exception) {
+//     throw XmlRpcConversionFailed(exception.getMessage());
+//   }  
+//   
+//   BOOST_ASSERT(!identifier.empty());
+//   BOOST_ASSERT(!type.empty());
+//   
+//   const_cast<std::string&>(identifier_) = identifier;
+//   const_cast<std::string&>(type_) = type;
+// }
 
 Entity::Impl::~Impl() {
 }
@@ -90,23 +110,29 @@ size_t Entity::getNumProperties() const {
     return 0;
 }
 
-boost::unordered_map<std::string, Property> Entity::getProperties() const {
+boost::unordered_multimap<std::string, Property> Entity::getProperties()
+    const {
   if (impl_.get())
     return impl_->properties_;
   else
-    return boost::unordered_map<std::string, Property>();
+    return boost::unordered_multimap<std::string, Property>();
 }
 
-Property Entity::getProperty(const std::string& identifier) const {
-  if (impl_.get()) {
-    boost::unordered_map<std::string, Property>::const_iterator
-      it = impl_->properties_.find(identifier);
+std::list<Property> Entity::getProperties(const std::string& identifier)
+    const {
+  std::list<Property> properties;
       
-    if (it != impl_->properties_.end())
-      return it->second;
+  if (impl_.get()) {
+    std::pair<boost::unordered_multimap<std::string, Property>::
+      const_iterator, boost::unordered_multimap<std::string, Property>::
+      const_iterator> range = impl_->properties_.equal_range(identifier);
+    
+    for (boost::unordered_multimap<std::string, Property>::const_iterator
+        jt = range.first; jt != range.second; ++jt)
+      properties.push_back(jt->second);
   }
   
-  return Property();
+  return properties;
 }
 
 bool Entity::hasParent() const {
@@ -119,6 +145,13 @@ bool Entity::hasParent() const {
 bool Entity::isMap() const {
   if (impl_.get())
     return boost::dynamic_pointer_cast<Map::Impl>(impl_).get();
+  else
+    return false;
+}
+
+bool Entity::isMission() const {
+  if (impl_.get())
+    return boost::dynamic_pointer_cast<Mission::Impl>(impl_).get();
   else
     return false;
 }
@@ -161,6 +194,34 @@ ObjectProperty Entity::addProperty(const std::string& identifier, const
 void Entity::clearProperties() {
   if (impl_.get())
     impl_->properties_.clear();
+}
+
+// XmlRpc::XmlRpcValue Entity::toXmlRpcValue() const {
+//   XmlRpc::XmlRpcValue value;
+//   
+//   if (impl_.get()) {
+//     try {
+//       value["id"] = getIdentifier();
+//       value["type"] = getType();
+//     }
+//     catch (const XmlRpc::XmlRpcException& exception) {
+//       throw XmlRpcConversionFailed(exception.getMessage());
+//     }
+//   }
+//   
+//   return value;
+// }
+
+/*****************************************************************************/
+/* Operators                                                                 */
+/*****************************************************************************/
+
+bool Entity::operator==(const Entity& entity) const {
+  if (isValid() && entity.isValid()) {
+    if ((getIdentifier() == entity.getIdentifier()) && (getType() == src.getType())) ;
+  }
+  else
+    return (isValid() == entity.isValid());
 }
 
 }

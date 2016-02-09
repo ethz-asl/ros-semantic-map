@@ -16,38 +16,57 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.       *
  ******************************************************************************/
 
-#include <semantic_map_common/DataProperty.h>
-
-namespace semantic_map {
-
-/*****************************************************************************/
-/* Constructors and Destructor                                               */
-/*****************************************************************************/
-
-template <class M> Entity::Impl::Impl(const M& message, const Entity&
-    parent) :
-  identifier_(message.id),
-  type_(message.type),
-  parent_(new Entity(parent)) {
-  BOOST_ASSERT(!message.id.empty());
-  BOOST_ASSERT(!message.type.empty());
-}
+namespace semantic_map { namespace conversions {
 
 /*****************************************************************************/
 /* Methods                                                                   */
 /*****************************************************************************/
 
-template <typename T> DataProperty Entity::addProperty(const std::string&
-    identifier, const T& value) {
-  if (impl_.get()) {
-    DataProperty property(identifier, *this, value);
-    
-    impl_->properties_.insert(std::make_pair(identifier, property));
-    
-    return property;
-  }
-  else
-    return DataProperty();
+template <class M> M MessageConversions::actionToMessage(const Action& action)
+    const {
+  M message = this->template entityToMessage<M>(action);
+  
+  message.asserted = action.isAsserted();
+  
+  return message;
 }
 
+template <class M> M MessageConversions::entityToMessage(const Entity& entity)
+    const {
+  M message;
+      
+  message.id = entity.getIdentifier();
+  message.type = entity.getType();
+  
+  return message;
 }
+
+template <class M> M MessageConversions::propertyToMessage(const Property&
+    property) const {
+  M message;
+      
+  message.id = property.getIdentifier();
+  message.subject = property.getSubject().getIdentifier();
+  
+  return message;
+}
+
+template <class P> Task MessageConversions::taskFromMessage(const
+    semantic_map_msgs::Task& message, P& parent) const {
+  Task task = parent.addTask(message.id, message.type, message.asserted);
+
+  for (size_t index = 0; index < message.actions.size(); ++index)
+    ;
+//     task.addAction(message.actions[index]);
+  
+  if (message.quantification == semantic_map_msgs::Task::QUANTIFICATION_UNION)
+    task.setQuantification(Task::Union);
+  else
+    task.setQuantification(Task::Intersection);
+ 
+  task.setUnordered(message.unordered);
+  
+  return task;
+}
+
+}}

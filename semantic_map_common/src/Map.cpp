@@ -18,8 +18,6 @@
 
 #include <boost/date_time.hpp>
 
-#include <XmlRpcException.h>
-
 #include "semantic_map_common/Map.h"
 
 namespace semantic_map {
@@ -27,12 +25,6 @@ namespace semantic_map {
 /*****************************************************************************/
 /* Constructors and Destructor                                               */
 /*****************************************************************************/
-
-Map::XmlRpcConversionFailed::XmlRpcConversionFailed(const std::string&
-    description) :
-  ros::Exception("XML-RPC value conversion of semantic map failed: "+
-    description) {
-}
 
 Map::Map() {
 }
@@ -58,7 +50,7 @@ Map::~Map() {
 Map::Impl::Impl(const std::string& identifier, const std::string& type, const
     std::string& ns, const std::string& frame, const ros::Time& stamp) :
   Entity::Impl(identifier, type),
-  ns_(ns),
+  ontology_(ns),
   frame_(frame),
   stamp_(stamp) {
 }
@@ -70,16 +62,16 @@ Map::Impl::~Impl() {
 /* Accessors                                                                 */
 /*****************************************************************************/
 
-void Map::setNamespace(const std::string& ns) {
+void Map::setOntology(const Ontology& ontology) {
   if (impl_.get())
-    boost::static_pointer_cast<Impl>(impl_)->ns_ = ns;
+    boost::static_pointer_cast<Impl>(impl_)->ontology_ = ontology;
 }
 
-std::string Map::getNamespace() const {
+Ontology Map::getOntology() const {
   if (impl_.get())
-    return boost::static_pointer_cast<Impl>(impl_)->ns_;
+    return boost::static_pointer_cast<Impl>(impl_)->ontology_;
   else
-    return std::string();
+    return Ontology();
 }
 
 void Map::setFrame(const std::string& frame) {
@@ -119,17 +111,36 @@ Address Map::getAddress() const {
 }
 
 size_t Map::getNumObjects() const {
-  if (impl_.get())
-    return boost::static_pointer_cast<Impl>(impl_)->objects_.size();
-  else
-    return 0;
+  size_t numObjects = 0;
+  
+  if (impl_.get()) {
+    numObjects = boost::static_pointer_cast<Impl>(impl_)->objects_.size();
+      
+    for (boost::unordered_map<std::string, Object>::const_iterator
+        it = begin(); it != end(); ++it)
+      numObjects += it->second.getNumParts();    
+  }
+  
+  return numObjects;
 }
 
 boost::unordered_map<std::string, Object> Map::getObjects() const {
-  if (impl_.get())
-    return boost::static_pointer_cast<Impl>(impl_)->objects_;
-  else
-    return boost::unordered_map<std::string, Object>();
+  boost::unordered_map<std::string, Object> objects;
+  
+  if (impl_.get()) {
+    objects = boost::static_pointer_cast<Impl>(impl_)->objects_;
+    
+    for (boost::unordered_map<std::string, Object>::const_iterator
+        it = begin(); it != end(); ++it) {
+      boost::unordered_map<std::string, Object> parts = it->second.getParts();
+      
+      for (boost::unordered_map<std::string, Object>::const_iterator
+          jt = parts.begin(); jt != parts.end(); ++jt)
+        objects.insert(*jt);
+    }
+  }
+
+  return objects;
 }
 
 Object Map::getObject(const std::string& identifier) const {
@@ -137,55 +148,19 @@ Object Map::getObject(const std::string& identifier) const {
     boost::unordered_map<std::string, Object>::const_iterator it =
       boost::static_pointer_cast<Impl>(impl_)->objects_.find(identifier);
       
-    if (it != boost::static_pointer_cast<Impl>(impl_)->objects_.end())
+    if (it == boost::static_pointer_cast<Impl>(impl_)->objects_.end()) {
+      for (it = begin(); it != end(); ++it) {
+        Object part = it->second.getPart(identifier);
+        
+        if (part.isValid())
+          return part;
+      }
+    }
+    else
       return it->second;
   }
-  
+
   return Object();
-}
-
-size_t Map::getNumImports() const {
-  if (impl_.get())
-    return boost::static_pointer_cast<Impl>(impl_)->imports_.size();
-  else
-    return 0;
-}
-
-std::list<std::string> Map::getImports() const {
-  if (impl_.get())
-    return boost::static_pointer_cast<Impl>(impl_)->imports_;
-  else
-    return std::list<std::string>();
-}
-
-size_t Map::getNumPrefixes() const {
-  if (impl_.get())
-    return boost::static_pointer_cast<Impl>(impl_)->prefixes_.size();
-  else
-    return 0;
-}
-
-boost::unordered_map<std::string, NamespacePrefix> Map::getPrefixes() const {
-  if (impl_.get())
-    return boost::static_pointer_cast<Impl>(impl_)->prefixes_;
-  else
-    return boost::unordered_map<std::string, NamespacePrefix>();
-}
-
-NamespacePrefix Map::getPrefix(const std::string& prefix) const {
-  if (impl_.get()) {
-    boost::unordered_map<std::string, NamespacePrefix>::const_iterator it =
-      boost::static_pointer_cast<Impl>(impl_)->prefixes_.find(prefix);
-      
-    if (it != boost::static_pointer_cast<Impl>(impl_)->prefixes_.end())
-      return it->second;
-  }
-  
-  return NamespacePrefix();
-}
-    
-bool Map::isValid() const {
-  return impl_.get();
 }
 
 /*****************************************************************************/
@@ -238,41 +213,7 @@ void Map::clearObjects() {
     boost::static_pointer_cast<Impl>(impl_)->objects_.clear();
 }
 
-void Map::addImport(const std::string& import) {
-  BOOST_ASSERT(!import.empty());
-  
-  if (impl_.get())
-    boost::static_pointer_cast<Impl>(impl_)->imports_.push_back(import);
-}
-
-void Map::clearImports() {
-  if (impl_.get())
-    boost::static_pointer_cast<Impl>(impl_)->imports_.clear();
-}
-
-void Map::addPrefix(const NamespacePrefix& prefix) {
-  BOOST_ASSERT(prefix.isValid());
-  
-  if (impl_.get())
-    boost::static_pointer_cast<Impl>(impl_)->prefixes_.insert(
-      std::make_pair(prefix.getPrefix(), prefix));
-}
-
-NamespacePrefix Map::addPrefix(const std::string& prefix, const std::string&
-    ns) {
-  NamespacePrefix namespacePrefix(prefix, ns);
-  
-  addPrefix(namespacePrefix);
-  
-  return namespacePrefix;
-}
-
-void Map::clearPrefixes() {
-  if (impl_.get())
-    boost::static_pointer_cast<Impl>(impl_)->prefixes_.clear();
-}
-
-void Map::fromXmlRpcValue(const XmlRpc::XmlRpcValue& value) {
+// void Map::fromXmlRpcValue(const XmlRpc::XmlRpcValue& value) {
 //   try {
 //     if (value.hasMember("id"))
 //       identifier_ = (std::string)const_cast<XmlRpc::XmlRpcValue&>(
@@ -352,9 +293,9 @@ void Map::fromXmlRpcValue(const XmlRpc::XmlRpcValue& value) {
 //   catch (const XmlRpc::XmlRpcException& exception) {
 //     throw XmlRpcConversionFailed(exception.getMessage());
 //   }
-}
+// }
 
-void Map::toXmlRpcValue(XmlRpc::XmlRpcValue& value) const {
+// void Map::toXmlRpcValue(XmlRpc::XmlRpcValue& value) const {
 //   try {
 //     value["id"] = identifier_;
 //     value["namespace"] = ns_;
@@ -385,7 +326,7 @@ void Map::toXmlRpcValue(XmlRpc::XmlRpcValue& value) const {
 //   catch (const XmlRpc::XmlRpcException& exception) {
 //     throw XmlRpcConversionFailed(exception.getMessage());
 //   }
-}
+// }
 
 /*****************************************************************************/
 /* Operators                                                                 */
@@ -393,6 +334,14 @@ void Map::toXmlRpcValue(XmlRpc::XmlRpcValue& value) const {
 
 Object Map::operator[](const std::string& identifier) const {
   return getObject(identifier);
+}
+
+bool Map::operator==(const Map& map) const {
+  if (isValid() && map.isValid()) {
+    return true;
+  }
+  else
+    return (isValid() == map.isValid());
 }
 
 }

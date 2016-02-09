@@ -26,6 +26,11 @@
 #include <string>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/unordered_map.hpp>
+
+#include <XmlRpcValue.h>
+
+#include <ros/exception.h>
 
 namespace semantic_map {
   class DataProperty;
@@ -36,6 +41,15 @@ namespace semantic_map {
     */    
   class Property {
   public:
+    /** \brief Exception thrown in case of a failure to convert a semantic
+      *   map property from/to an XML-RPC value
+      */    
+    class XmlRpcConversionFailed :
+      public ros::Exception {
+    public:
+      XmlRpcConversionFailed(const std::string& description);
+    };
+    
     /** \brief Default constructor
       */
     Property();
@@ -68,12 +82,26 @@ namespace semantic_map {
       */
     bool isValid() const;
     
+    /** \brief Convert this semantic map property to an XML-RPC value
+      */
+    virtual XmlRpc::XmlRpcValue toXmlRpcValue() const;
+    
+    /** \brief Convert this semantic map property to a message
+      */
+    template <class M> M toMessage() const;
+    
   protected:
+    friend class Entity;
+    
     /** \brief Semantic map property (implementation)
       */
     class Impl {
     public:
       Impl(const std::string& identifier, const Entity& subject);
+      Impl(const XmlRpc::XmlRpcValue& value, const boost::unordered_map<
+        std::string, Entity>& entities);
+      template <class M> Impl(const M& message, const boost::unordered_map<
+        std::string, Entity>& entities);
       virtual ~Impl();
       
       const std::string identifier_;
@@ -82,8 +110,10 @@ namespace semantic_map {
     
     /** \brief The semantic map property's implementation
       */
-    boost::shared_ptr<Impl> impl_;
+    boost::shared_ptr<Impl> impl_;    
   };
 };
+
+#include <semantic_map_common/Property.tpp>
 
 #endif

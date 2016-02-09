@@ -89,26 +89,28 @@ namespace semantic_map {
       */
     const Eigen::Vector3d& getDimensions() const;
     
-    /** \brief Convert an XML-RPC value to this semantic map size
-      */
-    void fromXmlRpcValue(const XmlRpc::XmlRpcValue& value);
-    
     /** \brief Convert this semantic map size to an XML-RPC value
       */
-    void toXmlRpcValue(XmlRpc::XmlRpcValue& value) const;
-    
-    /** \brief Convert a message to this semantic map size
-      */
-    void fromMessage(const semantic_map_msgs::Size& message);
+    XmlRpc::XmlRpcValue toXmlRpcValue() const;
     
     /** \brief Convert this semantic map size to a message
       */
     semantic_map_msgs::Size toMessage() const;
     
   protected:
+    friend class Object;
+    
     /** \brief The dimensions of this size
       */
     Eigen::Vector3d dimensions_;
+    
+    /** \brief Constructor (overloaded version taking an XML-RPC value)
+      */
+    Size(const XmlRpc::XmlRpcValue& value);
+    
+    /** \brief Constructor (overloaded version taking a message)
+      */
+    Size(const semantic_map_msgs::Size& message);
   };
 };
 

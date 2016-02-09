@@ -16,73 +16,42 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.       *
  ******************************************************************************/
 
-/** \file Action.h
-  * \brief Header file providing the Action class interface
-  */
-
-#ifndef ROS_SEMANTIC_MAP_ACTION_H
-#define ROS_SEMANTIC_MAP_ACTION_H
+#include <XmlRpcException.h>
 
 #include <semantic_map_common/Entity.h>
 
 namespace semantic_map {
-  class Object;
-  
-  /** \brief Semantic map action
-    */    
-  class Action :
-    public Entity {
-  public:
-    /** \brief Default constructor
-      */
-    Action();
-    
-    /** \brief Copy constructor
-      */
-    Action(const Action& src);
-    
-    /** \brief Copy constructor (overloaded version taking an entity)
-      */
-    Action(const Entity& src);
-    
-    /** \brief Destructor
-      */
-    virtual ~Action();
-    
-    /** \brief Set to true to make this semantic map action an
-      *   asserted action
-      */
-    void setAsserted(bool asserted);
-    
-    /** \brief True, if this semantic map action is an asserted action
-      */
-    bool isAsserted() const;
-    
-    /** \brief True, if this semantic map action is an action on a
-      *   semantic map object
-      */
-    bool isActionOnObject() const;
-    
-    /** \brief True, if this semantic map action is a task
-      */
-    bool isTask() const;
-    
-  protected:
-    friend class Entity;
-    friend class Task;
-    
-    /** \brief Semantic map action (implementation)
-      */
-    class Impl :
-      public Entity::Impl {
-    public:
-      Impl(const std::string& identifier, const std::string& type,
-        bool asserted);
-      virtual ~Impl();
-      
-      bool asserted_;
-    };
-  };
-};
 
-#endif
+/*****************************************************************************/
+/* Constructors and Destructor                                               */
+/*****************************************************************************/
+
+template <class M> Property::Impl::Impl(const M& message, const boost::
+    unordered_map<std::string, Entity>& entities) :
+  identifier_(message.id) {
+  BOOST_ASSERT(!message.id.empty());
+  
+  boost::unordered_map<std::string, Entity>::const_iterator it = entities.
+    find(message.subject);
+
+  BOOST_ASSERT(it != entities.end());
+  BOOST_ASSERT(it->second.isValid());
+  
+  const_cast<boost::shared_ptr<Entity>&>(this->subject_).reset(
+    new Entity(it->second));
+}
+
+/*****************************************************************************/
+/* Methods                                                                   */
+/*****************************************************************************/
+
+template <class M> M Property::toMessage() const {
+  M message;
+  
+  message.id = this->getIdentifier();
+  message.subject = this->getSubject().getIdentifier();
+  
+  return message;
+}
+   
+}

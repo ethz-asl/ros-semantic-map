@@ -23,9 +23,8 @@
 #ifndef ROS_SEMANTIC_MAP_ACTION_ON_OBJECT_H
 #define ROS_SEMANTIC_MAP_ACTION_ON_OBJECT_H
 
-#include <semantic_map_msgs/ActionOnObject.h>
-
 #include <semantic_map_common/Action.h>
+#include <semantic_map_common/Object.h>
 
 namespace semantic_map {
   class Object;
@@ -52,12 +51,9 @@ namespace semantic_map {
     virtual ~ActionOnObject();
     
     /** \brief Retrieve the object acted on by this semantic map action
+      *   on object
       */
     Object getObjectActedOn() const;
-    
-    /** \brief Convert this semantic map action to a message
-      */
-    semantic_map_msgs::ActionOnObject toMessage() const;
     
   protected:
     friend class Action;
@@ -68,16 +64,12 @@ namespace semantic_map {
     class Impl :
       public Action::Impl {
     public:
-      Impl(const std::string& identifier, const std::string& type, const
-        Object& objectActedOn, bool asserted);
+      Impl(const std::string& identifier, const std::string& type, bool
+        asserted, const Object& objectActedOn);
       virtual ~Impl();
+      
+      const Object objectActedOn_;
     };
-    
-    /** \brief Constructor (overloaded version taking an identifier, a type,
-      *   an object acted on, and an asserted flag)
-      */
-    ActionOnObject(const std::string& identifier, const std::string& type,
-      const Object& objectActedOn, bool asserted = false);
   };
 };
 
